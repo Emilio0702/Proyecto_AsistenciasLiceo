@@ -3,16 +3,22 @@ const db = require('../db/db');
 
 const router = express.Router();
 
+const { format } = require('date-fns-tz');
+
 // Registrar una nueva colación
 router.post('/', async (req, res) => {
     const { camionero_id, tienda_id, usuario_id } = req.body;
     
+    // Obtener hora local en Chile
+    const timeZone = 'America/Santiago';
+    const now = new Date();
+    const horaChile = format(now, 'HH:mm:ss', { timeZone });
+    const fechaChile = format(now, 'yyyy-MM-dd', { timeZone });
+
     try {
-        // La restricción UNIQUE en la base de datos (camionero_id, fecha) 
-        // se encargará de evitar duplicados automáticamente.
         const result = await db.query(
-            'INSERT INTO registros_colaciones (camionero_id, tienda_id, usuario_id) VALUES ($1, $2, $3) RETURNING *',
-            [camionero_id, tienda_id, usuario_id]
+            'INSERT INTO registros_colaciones (camionero_id, tienda_id, usuario_id, fecha, hora) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            [camionero_id, tienda_id, usuario_id, fechaChile, horaChile]
         );
         res.status(201).json({
             message: 'Colación registrada exitosamente',

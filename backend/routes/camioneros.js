@@ -29,11 +29,11 @@ router.get('/:rut', async (req, res) => {
 
 // Registrar nuevo camionero
 router.post('/', async (req, res) => {
-    const { rut, nombre, patente } = req.body;
+    const { rut, nombre, patente, telefono } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO camioneros (rut, nombre, patente) VALUES ($1, $2, $3) RETURNING *',
-            [rut, nombre, patente]
+            'INSERT INTO camioneros (rut, nombre, patente, telefono) VALUES ($1, $2, $3, $4) RETURNING *',
+            [rut, nombre, patente, telefono]
         );
         res.status(201).json(result.rows[0]);
     } catch (error) {
