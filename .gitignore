@@ -1,12 +1,16 @@
-# Backend .gitignore
+# Ignorar dependencias
 node_modules/
-.env
-.DS_Store
 dist/
 build/
+.env
 
-# Frontend .gitignore
-frontend/node_modules/
-frontend/.expo/
-frontend/dist/
+# Ignorar archivos temporales
+.expo/
+.vscode/
 .DS_Store
+*.log
+*.tmp
+
+# Ignorar configuraciones locales
+.eslintcache
+.jest-cache
