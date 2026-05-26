@@ -13,9 +13,13 @@ INSERT INTO camioneros (rut, nombre, patente) VALUES
 ON CONFLICT (rut) DO NOTHING;
 
 -- 3. Insertar Usuario (Encargada) de ejemplo
--- La contraseña '123456' hasheada (aunque por ahora es texto plano para pruebas rápidas)
 INSERT INTO usuarios (email, password_hash, nombre, tienda_id) VALUES 
-('encargada1@empresa.com', 'scrypt_o_bcrypt_hash_aqui', 'Ana García', (SELECT id FROM tiendas LIMIT 1))
+('encargada1@serviterra.com', '$2b$10$5EDfw0N7hv0QdXF3GW8qRONQOXeP0.v7qLnsESUUFBlidJ1090Mc2', 'Ana García', (SELECT id FROM tiendas LIMIT 1))
+ON CONFLICT (email) DO NOTHING;
+
+-- 4. Insertar Usuario (Admin) de ejemplo
+INSERT INTO usuarios (email, password_hash, nombre, rol) VALUES 
+('admin@serviterra.com', '$2b$10$5EDfw0N7hv0QdXF3GW8qRONQOXeP0.v7qLnsESUUFBlidJ1090Mc2', 'Administrador Principal', 'admin')
 ON CONFLICT (email) DO NOTHING;
 
 -- 4. Consulta para verificar IDs (Útil para las pruebas de Postman/API)

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS camioneros (
     rut TEXT UNIQUE NOT NULL,
     nombre TEXT NOT NULL,
     patente TEXT,
+    telefono TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

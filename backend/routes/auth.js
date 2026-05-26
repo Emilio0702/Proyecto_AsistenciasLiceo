@@ -1,0 +1,91 @@
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('../db/db');
+
+const router = express.Router();
+const JWT_SECRET = process.env.JWT_SECRET || 'serviterra_secret_key_2024';
+
+// Registro de usuario
+router.post('/register', async (req, res) => {
+    const { email, password, nombre, tienda_id, rol } = req.body;
+
+    try {
+        // Verificar si el usuario ya existe
+        const userCheck = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) {
+            return res.status(400).json({ message: 'El correo electrónico ya está registrado' });
+        }
+
+        // Hashear la contraseña
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        // Insertar usuario
+        const result = await db.query(
+            'INSERT INTO usuarios (email, password_hash, nombre, tienda_id, rol) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, nombre, rol, tienda_id',
+            [email, passwordHash, nombre, tienda_id, rol || 'encargada']
+        );
+
+        res.status(201).json({
+            message: 'Usuario registrado exitosamente',
+            user: result.rows[0]
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Login de usuario
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        // Buscar usuario e incluir información de la tienda
+        const result = await db.query(`
+            SELECT u.*, t.nombre as tienda_nombre 
+            FROM usuarios u 
+            LEFT JOIN tiendas t ON u.tienda_id = t.id 
+            WHERE u.email = $1
+        `, [email]);
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
+        }
+
+        const user = result.rows[0];
+        console.log('Usuario encontrado:', user.email);
+        console.log('Hash en DB:', user.password_hash);
+
+        // Verificar contraseña
+        const isMatch = await bcrypt.compare(password, user.password_hash);
+        console.log('¿Contraseña coincide?:', isMatch);
+        
+        if (!isMatch) {
+            return res.status(401).json({ message: 'Credenciales inválidas' });
+        }
+
+        // Generar token
+        const token = jwt.sign(
+            { id: user.id, email: user.email, rol: user.rol, tienda_id: user.tienda_id },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                nombre: user.nombre,
+                rol: user.rol,
+                tienda_id: user.tienda_id,
+                tienda_nombre: user.tienda_nombre
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+module.exports = router;

@@ -1,12 +1,37 @@
 services:
+  db:
+    image: postgres:15-alpine
+    container_name: serviterra_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_DATABASE:-registro_colacion}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./backend/db/seed.sql:/docker-entrypoint-initdb.d/seed.sql
+
   backend:
     build: ./backend
+    container_name: serviterra_backend
     ports:
       - "3000:3000"
-    env_file:
-      - ./backend/.env
+    environment:
+      - PORT=3000
+      - DB_USER=${DB_USER:-postgres}
+      - DB_HOST=db
+      - DB_DATABASE=${DB_DATABASE:-registro_colacion}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_PORT=5432
+      - JWT_SECRET=${JWT_SECRET:-serviterra_secret_key_2024}
+    depends_on:
+      - db
     volumes:
       - ./backend:/app
       - /app/node_modules
-    environment:
-      - PORT=3000
+
+volumes:
+  postgres_data:
