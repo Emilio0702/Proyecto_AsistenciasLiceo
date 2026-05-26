@@ -5,6 +5,8 @@ import { User, Clock, Store, Search, UserPlus, Truck, Download, LogOut, Settings
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+const serviterraLogo = require('../../assets/serviterra.jpg');
+
 export default function AdminHomeScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
   const nombreUsuario = user?.nombre || 'Admin';
@@ -98,7 +100,7 @@ export default function AdminHomeScreen({ navigation }: any) {
       
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Image source={require('../../assets/serviterra.jpg')} style={styles.logo} resizeMode="contain" />
+          <Image source={serviterraLogo} style={styles.logo} resizeMode="contain" />
           <TouchableOpacity onPress={() => signOut()} style={styles.logoutBtn}>
             <LogOut color="#FF3B30" size={24} />
           </TouchableOpacity>
@@ -227,9 +229,9 @@ export default function AdminHomeScreen({ navigation }: any) {
                 >
                   <Text style={[styles.quickFilterText, selectedTienda === '' && styles.quickFilterTextActive]}>Todas</Text>
                 </TouchableOpacity>
-                {tiendas.map((t) => (
+                {tiendas.map((t: any) => (
                   <TouchableOpacity 
-                    key={t.id}
+                    key={t.id.toString()}
                     style={[styles.quickFilterBtn, selectedTienda === t.id.toString() && styles.quickFilterBtnActive]} 
                     onPress={() => setSelectedTienda(t.id.toString())}
                   >
@@ -244,13 +246,13 @@ export default function AdminHomeScreen({ navigation }: any) {
                   style={styles.dateInput} 
                   placeholder="Desde: 2026-01-01" 
                   value={fechaInicio} 
-                  onChangeText={(val) => { setFechaInicio(val); setActiveDateFilter(''); }} 
+                  onChangeText={(val: string) => { setFechaInicio(val); setActiveDateFilter(''); }} 
                 />
                 <TextInput 
                   style={styles.dateInput} 
                   placeholder="Hasta: 2026-12-31" 
                   value={fechaFin} 
-                  onChangeText={(val) => { setFechaFin(val); setActiveDateFilter(''); }} 
+                  onChangeText={(val: string) => { setFechaFin(val); setActiveDateFilter(''); }} 
                 />
               </View>
               {(fechaInicio !== '' || fechaFin !== '' || selectedTienda !== '' || activeDateFilter !== '') && (
