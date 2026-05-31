@@ -1,16 +1,15 @@
 const { Pool } = require('pg');
 require('dotenv').config(); // Carga las variables de entorno del archivo .env si existe
 
+const useSSL = process.env.DB_SSL === 'true';
+
 const pool = new Pool({
   user: process.env.DB_USER,
   host: process.env.DB_HOST,
   database: process.env.DB_DATABASE,
   password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
-  ssl: {
-    rejectUnauthorized: false,
-    servername: process.env.DB_SNI_HOSTNAME || process.env.DB_HOST
-  }
+  ssl: useSSL ? { rejectUnauthorized: false } : false
 });
 
 pool.on('error', (err) => {

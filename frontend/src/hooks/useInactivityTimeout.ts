@@ -4,7 +4,7 @@ import { AppState, AppStateStatus } from 'react-native';
 const TIMEOUT_DURATION = 5 * 60 * 1000; // 5 minutos
 
 export const useInactivityTimeout = (navigation: any) => {
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const resetTimeout = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);

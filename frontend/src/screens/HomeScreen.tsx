@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Keyboard, Modal, Image, StatusBar, Platform, FlatList } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Keyboard, Modal, Image, StatusBar, Platform, FlatList, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, User, ClipboardCheck, LayoutGrid, QrCode, X, LogOut, UserPlus, Store, Clock } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -22,7 +22,7 @@ export default function HomeScreen({ navigation }: any) {
   const [isScannerVisible, setIsScannerVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
 
-  const [historial, setHistorial] = useState([]);
+  const [historial, setHistorial] = useState<any[]>([]);
   const [page, setPage] = useState(0);
   const [totalRecords, setTotalRecords] = useState(0);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -49,8 +49,28 @@ export default function HomeScreen({ navigation }: any) {
     }
   };
 
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const logoutSlide = useRef(new Animated.Value(300)).current;
+  const logoutBackdrop = useRef(new Animated.Value(0)).current;
+
+  const openLogoutModal = () => {
+    setShowLogoutModal(true);
+    Animated.parallel([
+      Animated.timing(logoutBackdrop, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.spring(logoutSlide, { toValue: 0, tension: 65, friction: 10, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const closeLogoutModal = () => {
+    Animated.parallel([
+      Animated.timing(logoutBackdrop, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(logoutSlide, { toValue: 300, duration: 200, useNativeDriver: true }),
+    ]).start(() => setShowLogoutModal(false));
+  };
+
   const handleLogout = async () => {
-    await signOut();
+    closeLogoutModal();
+    setTimeout(async () => { await signOut(); }, 220);
   };
 
   const extraerRutDeQR = (data: string) => {
@@ -119,7 +139,7 @@ export default function HomeScreen({ navigation }: any) {
           <Image source={require('../../assets/serviterra.jpg')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.local}>{nombreLocal}</Text>
         </View>
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
+        <TouchableOpacity onPress={openLogoutModal} style={styles.logoutBtn} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
           <LogOut color="#FF3B30" size={24} />
         </TouchableOpacity>
       </View>
@@ -206,6 +226,31 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       )}
 
+      {/* Modal de confirmación de cierre de sesión */}
+      <Modal visible={showLogoutModal} transparent animationType="none" onRequestClose={closeLogoutModal}>
+        <Animated.View style={[styles.logoutBackdrop, { opacity: logoutBackdrop }]}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={closeLogoutModal} />
+        </Animated.View>
+        <Animated.View style={[styles.logoutSheet, { transform: [{ translateY: logoutSlide }] }]}>
+          <View style={styles.logoutHandle} />
+          <View style={styles.logoutIconWrap}>
+            <LogOut size={32} color="#FF3B30" />
+          </View>
+          <Text style={styles.logoutTitle}>¿Cerrar sesión?</Text>
+          <Text style={styles.logoutSubtitle}>
+            Hola <Text style={{ fontWeight: '800', color: '#1C1C1E' }}>{nombreUsuario}</Text>, ¿seguro que quieres salir de{' '}
+            <Text style={{ fontWeight: '800', color: '#2C5EAD' }}>{nombreLocal}</Text>?
+          </Text>
+          <TouchableOpacity style={styles.logoutConfirmBtn} onPress={handleLogout} activeOpacity={0.85}>
+            <LogOut size={20} color="#fff" />
+            <Text style={styles.logoutConfirmText}>Sí, cerrar sesión</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutCancelBtn} onPress={closeLogoutModal} activeOpacity={0.85}>
+            <Text style={styles.logoutCancelText}>Cancelar</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Modal>
+
       <Modal visible={isScannerVisible} animationType="slide">
         <CameraView style={StyleSheet.absoluteFillObject} onBarcodeScanned={handleBarCodeScanned} barcodeScannerSettings={{barcodeTypes: ["qr"]}}>
           <View style={styles.scannerOverlay}>
@@ -230,7 +275,13 @@ const styles = StyleSheet.create({
     height: 70,
     alignItems: 'center', 
     borderBottomWidth: 1, 
-    borderBottomColor: '#F2F2F7' 
+    borderBottomColor: '#D1D1D6',
+    backgroundColor: '#FFFFFF',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
   headerLogoSection: {
     height: '100%',
@@ -272,5 +323,43 @@ const styles = StyleSheet.create({
   scannerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
   closeScanner: { position: 'absolute', top: 50, right: 30 },
   scannerFrame: { width: 280, height: 280, borderWidth: 4, borderColor: '#2C5EAD', borderRadius: 40 },
-  scannerText: { color: '#fff', fontSize: 18, marginTop: 40, fontWeight: '800' }
+  scannerText: { color: '#fff', fontSize: 18, marginTop: 40, fontWeight: '800' },
+  // Logout modal
+  logoutBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  logoutSheet: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    padding: 28, paddingBottom: 40,
+    alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1, shadowRadius: 20, elevation: 20,
+  },
+  logoutHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#E5E5EA', marginBottom: 24,
+  },
+  logoutIconWrap: {
+    width: 64, height: 64, borderRadius: 20,
+    backgroundColor: '#FFF2F2',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
+  },
+  logoutTitle: { fontSize: 22, fontWeight: '800', color: '#1C1C1E', marginBottom: 8 },
+  logoutSubtitle: { fontSize: 15, color: '#8E8E93', textAlign: 'center', marginBottom: 28, lineHeight: 22 },
+  logoutConfirmBtn: {
+    width: '100%', height: 56, borderRadius: 16,
+    backgroundColor: '#FF3B30', flexDirection: 'row',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+    elevation: 3,
+  },
+  logoutConfirmText: { color: '#fff', fontSize: 17, fontWeight: '800', marginLeft: 10 },
+  logoutCancelBtn: {
+    width: '100%', height: 56, borderRadius: 16,
+    backgroundColor: '#F2F2F7',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  logoutCancelText: { color: '#1C1C1E', fontSize: 17, fontWeight: '700' },
 });

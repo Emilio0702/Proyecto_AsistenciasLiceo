@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, Image, Linking, Alert, StatusBar, Platform, ScrollView } from 'react-native';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, Image, Linking, Alert, StatusBar, Platform, ScrollView, Modal, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, Clock, Store, Search, UserPlus, Truck, Download, LogOut, Settings, ChevronRight, Filter, X } from 'lucide-react-native';
 import api from '../services/api';
@@ -12,6 +12,31 @@ export default function AdminHomeScreen({ navigation }: any) {
   const nombreUsuario = user?.nombre || 'Admin';
   const [registros, setRegistros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Logout modal
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const logoutSlide = useRef(new Animated.Value(300)).current;
+  const logoutBackdrop = useRef(new Animated.Value(0)).current;
+
+  const openLogoutModal = () => {
+    setShowLogoutModal(true);
+    Animated.parallel([
+      Animated.timing(logoutBackdrop, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.spring(logoutSlide, { toValue: 0, tension: 65, friction: 10, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const closeLogoutModal = () => {
+    Animated.parallel([
+      Animated.timing(logoutBackdrop, { toValue: 0, duration: 200, useNativeDriver: true }),
+      Animated.timing(logoutSlide, { toValue: 300, duration: 200, useNativeDriver: true }),
+    ]).start(() => setShowLogoutModal(false));
+  };
+
+  const handleLogout = () => {
+    closeLogoutModal();
+    setTimeout(async () => { await signOut(); }, 220);
+  };
   const [totalRecords, setTotalRecords] = useState(0);
   const [page, setPage] = useState(0);
   const [searchText, setSearchText] = useState('');
@@ -101,7 +126,7 @@ export default function AdminHomeScreen({ navigation }: any) {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Image source={serviterraLogo} style={styles.logo} resizeMode="contain" />
-          <TouchableOpacity onPress={() => signOut()} style={styles.logoutBtn}>
+          <TouchableOpacity onPress={openLogoutModal} style={styles.logoutBtn}>
             <LogOut color="#FF3B30" size={24} />
           </TouchableOpacity>
         </View>
@@ -300,13 +325,48 @@ export default function AdminHomeScreen({ navigation }: any) {
           )}
         </View>
       </ScrollView>
+      {/* Modal logout animado */}
+      <Modal visible={showLogoutModal} transparent animationType="none" onRequestClose={closeLogoutModal}>
+        <Animated.View style={[styles.logoutBackdrop, { opacity: logoutBackdrop }]}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={closeLogoutModal} />
+        </Animated.View>
+        <Animated.View style={[styles.logoutSheet, { transform: [{ translateY: logoutSlide }] }]}>
+          <View style={styles.logoutHandle} />
+          <View style={styles.logoutIconWrap}>
+            <LogOut size={32} color="#FF3B30" />
+          </View>
+          <Text style={styles.logoutTitle}>¿Cerrar sesión?</Text>
+          <Text style={styles.logoutSubtitle}>
+            Hola <Text style={{ fontWeight: '800', color: '#1C1C1E' }}>{nombreUsuario}</Text>,{' '}
+            ¿seguro que quieres salir del panel administrativo?
+          </Text>
+          <TouchableOpacity style={styles.logoutConfirmBtn} onPress={handleLogout} activeOpacity={0.85}>
+            <LogOut size={20} color="#fff" />
+            <Text style={styles.logoutConfirmText}>Sí, cerrar sesión</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutCancelBtn} onPress={closeLogoutModal} activeOpacity={0.85}>
+            <Text style={styles.logoutCancelText}>Cancelar</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: { paddingHorizontal: 24, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: '#F2F2F7' },
+  header: { 
+    paddingHorizontal: 24, 
+    paddingBottom: 20, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#D1D1D6',
+    backgroundColor: '#FFFFFF',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+  },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   logo: { width: 130, height: 45 },
   logoutBtn: { padding: 8 },
@@ -371,5 +431,43 @@ const styles = StyleSheet.create({
   recordFooter: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#F2F2F7', paddingTop: 12 },
   footerItem: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
   footerText: { fontSize: 13, color: '#8E8E93', marginLeft: 6, fontWeight: '600' },
-  emptyText: { textAlign: 'center', color: '#8E8E93', marginTop: 30, fontSize: 15 }
+  emptyText: { textAlign: 'center', color: '#8E8E93', marginTop: 30, fontSize: 15 },
+  // Logout modal
+  logoutBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  logoutSheet: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 28, borderTopRightRadius: 28,
+    padding: 28, paddingBottom: 40,
+    alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1, shadowRadius: 20, elevation: 20,
+  },
+  logoutHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#E5E5EA', marginBottom: 24,
+  },
+  logoutIconWrap: {
+    width: 64, height: 64, borderRadius: 20,
+    backgroundColor: '#FFF2F2',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
+  },
+  logoutTitle: { fontSize: 22, fontWeight: '800', color: '#1C1C1E', marginBottom: 8 },
+  logoutSubtitle: { fontSize: 15, color: '#8E8E93', textAlign: 'center', marginBottom: 28, lineHeight: 22 },
+  logoutConfirmBtn: {
+    width: '100%', height: 56, borderRadius: 16,
+    backgroundColor: '#FF3B30', flexDirection: 'row',
+    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+    elevation: 3,
+  },
+  logoutConfirmText: { color: '#fff', fontSize: 17, fontWeight: '800', marginLeft: 10 },
+  logoutCancelBtn: {
+    width: '100%', height: 56, borderRadius: 16,
+    backgroundColor: '#F2F2F7',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  logoutCancelText: { color: '#1C1C1E', fontSize: 17, fontWeight: '700' },
 });
