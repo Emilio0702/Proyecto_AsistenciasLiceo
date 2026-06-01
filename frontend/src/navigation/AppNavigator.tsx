@@ -10,6 +10,7 @@ import HomeScreen from '../screens/HomeScreen';
 import AdminHomeScreen from '../screens/AdminHomeScreen';
 import RegisterCamioneroScreen from '../screens/RegisterCamioneroScreen';
 import RegisterAdminScreen from '../screens/RegisterAdminScreen';
+import MapPickerScreen from '../screens/MapPickerScreen';
 import { useAuth } from '../context/AuthContext';
 
 const Stack = createStackNavigator();
@@ -36,11 +37,13 @@ export default function AppNavigator() {
                 <Stack.Screen name="AdminHome" component={AdminHomeScreen} />
                 <Stack.Screen name="RegisterCamionero" component={RegisterCamioneroScreen} />
                 <Stack.Screen name="RegisterAdmin" component={RegisterAdminScreen} />
+                <Stack.Screen name="MapPicker" component={MapPickerScreen} />
                 <Stack.Screen name="Home" component={HomeScreen} />
               </>
             ) : (
               <>
                 <Stack.Screen name="Home" component={HomeScreen} />
+                <Stack.Screen name="MapPicker" component={MapPickerScreen} />
               </>
             )}
           </>

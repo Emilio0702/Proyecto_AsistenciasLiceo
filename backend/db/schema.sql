@@ -2,7 +2,9 @@
 CREATE TABLE IF NOT EXISTS tiendas (
     id SERIAL PRIMARY KEY,
     nombre TEXT NOT NULL,
-    ubicacion TEXT,
+    ubicacion TEXT,                        -- Dirección en texto legible (ej: "Av. Libertador 123, Santiago")
+    latitud DECIMAL(10, 8),                -- Coordenada GPS latitud  (ej: -33.44890)
+    longitud DECIMAL(11, 8),               -- Coordenada GPS longitud (ej: -70.66930)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

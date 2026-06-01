@@ -1,18 +1,35 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, Modal, StatusBar, ScrollView, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Image, Modal, StatusBar, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { UserPlus, ArrowLeft, Save, Store, QrCode, X } from 'lucide-react-native';
+import { UserPlus, ArrowLeft, Save, Store, QrCode, X, MapPin, Map } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import api from '../services/api';
 
-export default function RegisterAdminScreen({ navigation }: any) {
+export default function RegisterAdminScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [tienda, setTienda] = useState('');
-  const [ubicacion, setUbicacion] = useState('');
+
+  // Datos de ubicación GPS que vienen desde MapPickerScreen
+  const [ubicacionTexto, setUbicacionTexto] = useState('');
+  const [latitud, setLatitud] = useState<number | null>(null);
+  const [longitud, setLongitud] = useState<number | null>(null);
+
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Recibe los datos cuando el usuario vuelve desde el mapa y confirma
+  useEffect(() => {
+    if (route.params?.ubicacionData) {
+      const { latitud: lat, longitud: lng, direccion } = route.params.ubicacionData;
+      setUbicacionTexto(direccion);
+      setLatitud(lat);
+      setLongitud(lng);
+      // Limpiamos el param para que no se vuelva a procesar si navegan
+      navigation.setParams({ ubicacionData: undefined });
+    }
+  }, [route.params?.ubicacionData]);
 
   const [isScannerVisible, setIsScannerVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
@@ -63,9 +80,12 @@ export default function RegisterAdminScreen({ navigation }: any) {
       let tiendaId = null;
 
       if (!isSuperAdmin) {
+        // Envía nombre, dirección en texto y coordenadas GPS (si las hay)
         const tiendaRes = await api.post('/tiendas', { 
           nombre: tienda, 
-          ubicacion: ubicacion 
+          ubicacion: ubicacionTexto || undefined,
+          latitud:  latitud  ?? undefined,
+          longitud: longitud ?? undefined,
         });
         tiendaId = tiendaRes.data.id;
       }
@@ -135,8 +155,30 @@ export default function RegisterAdminScreen({ navigation }: any) {
               <Text style={styles.label}>Nombre de la Tienda</Text>
               <TextInput style={styles.input} value={tienda} onChangeText={setTienda} placeholder="Ej: Tienda Central" />
               
-              <Text style={styles.label}>Ubicación / Ciudad</Text>
-              <TextInput style={styles.input} value={ubicacion} onChangeText={setUbicacion} placeholder="Ej: Santiago" />
+              <Text style={styles.label}>Ubicación en el Mapa</Text>
+
+              {/* Botón que abre el selector de mapa */}
+              <TouchableOpacity
+                style={[styles.mapBtn, latitud !== null && styles.mapBtnSelected]}
+                onPress={() => navigation.navigate('MapPicker', {
+                  coordenadas: latitud !== null ? { lat: latitud, lng: longitud } : null,
+                  direccion: ubicacionTexto,
+                })}
+                activeOpacity={0.8}
+              >
+                <Map size={20} color={latitud !== null ? '#2C5EAD' : '#8E8E93'} />
+                <Text style={[styles.mapBtnText, latitud !== null && styles.mapBtnTextSelected]}>
+                  {latitud !== null ? 'Cambiar ubicación en mapa' : 'Seleccionar en Mapa'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* Muestra la dirección seleccionada */}
+              {ubicacionTexto !== '' && (
+                <View style={styles.addressPreview}>
+                  <MapPin size={14} color="#2C5EAD" />
+                  <Text style={styles.addressPreviewText} numberOfLines={3}>{ubicacionTexto}</Text>
+                </View>
+              )}
             </>
           )}
 
@@ -201,6 +243,15 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontWeight: '800', marginLeft: 10, color: '#1C1C1E' },
   label: { fontSize: 14, fontWeight: '700', marginBottom: 8, color: '#48484A', marginLeft: 5 },
   input: { backgroundColor: '#fff', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 16, color: '#1C1C1E' },
+  // Botón selector de mapa
+  mapBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F2F2F7', height: 56, borderRadius: 15, marginBottom: 12, borderWidth: 1.5, borderColor: '#E5E5EA', gap: 10 },
+  mapBtnSelected: { backgroundColor: '#EBF2FA', borderColor: '#2C5EAD' },
+  mapBtnText: { fontSize: 15, fontWeight: '700', color: '#8E8E93' },
+  mapBtnTextSelected: { color: '#2C5EAD' },
+  // Vista previa de la dirección seleccionada
+  addressPreview: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#fff', padding: 12, borderRadius: 12, marginBottom: 15, borderWidth: 1, borderColor: '#D1D1D6', gap: 8 },
+  addressPreviewText: { flex: 1, fontSize: 13, color: '#3C3C43', lineHeight: 18 },
+  // Botón guardar
   saveButton: { backgroundColor: '#2C5EAD', height: 65, borderRadius: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 15, elevation: 4 },
   saveText: { color: '#fff', fontWeight: '800', fontSize: 18, marginLeft: 10 },
   scannerOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center' },
