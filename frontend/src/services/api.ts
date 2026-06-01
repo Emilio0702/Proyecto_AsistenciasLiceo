@@ -1,9 +1,11 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
 
-// Usar la IP local de tu computadora para que el celular pueda conectarse
-const LOCAL_IP = '192.168.1.85'; 
-const API_URL = `http://${LOCAL_IP}:3000/api`;
+// Obtener la URL de la API desde las variables de entorno de Expo (nativas con prefijo EXPO_PUBLIC_)
+// Si no está definida, por defecto usa la IP local como fallback en desarrollo local
+const DEFAULT_API_URL = 'http://192.168.1.85:3000/api';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+
+console.log('[API] Inicializado con base URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,

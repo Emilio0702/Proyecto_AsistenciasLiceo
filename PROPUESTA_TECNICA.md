@@ -67,9 +67,8 @@ A continuación, se detalla el nivel de madurez y desarrollo de cada módulo del
 Para realizar el paso a producción de forma exitosa y segura, es necesario subsanar los siguientes puntos técnicos identificados en el diagnóstico:
 
 > [!IMPORTANT]
-> **1. Configuración de Variables de Entorno en la App Móvil**
-> *   *Problema:* Actualmente la URL de la API (`LOCAL_IP`) está hardcodeada con una dirección IP local (`192.168.1.85`).
-> *   *Solución:* Configurar variables de entorno mediante un archivo `.env` o la configuración integrada de Expo (`app.config.ts`) para que el build de producción apunte al dominio en la nube del backend automáticamente.
+> **1. Configuración de Variables de Entorno en la App Móvil [IMPLEMENTADO]**
+> *   *Estado:* Resuelto. Se implementó la carga de variables de entorno mediante el soporte nativo de Expo (`EXPO_PUBLIC_API_URL`). Se agregaron los archivos `.env` (local, ignorado por seguridad en Git) y `.env.example` (plantilla de ejemplo), y se refactorizó `api.ts` para leer dinámicamente la URL de la API según el entorno.
 
 > [!WARNING]
 > **2. Cierre de Sesión Efectivo por Inactividad**
