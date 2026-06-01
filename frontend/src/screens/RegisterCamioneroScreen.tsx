@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Truck, ArrowLeft, Save, User, QrCode, X } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import api from '../services/api';
-import { formatRut, validateRut } from '../utils/rut';
+import { cleanRut, formatRut, validateRut } from '../utils/rut';
 
 export default function RegisterCamioneroScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
@@ -57,16 +57,16 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
       return;
     }
 
-    if (!validateRut(rut)) {
+    const rutCleaned = cleanRut(rut);
+    if (!validateRut(rutCleaned)) {
       Alert.alert('Error', 'El RUT ingresado no es válido (dígito verificador incorrecto).');
       return;
     }
 
     setLoading(true);
     try {
-      // Guardar el RUT sin puntos (ej: 12345678-9) para consistencia en la base de datos
-      const rutCleaned = rut.replace(/\./g, '');
-      await api.post('/camioneros', { rut: rutCleaned, nombre, patente, telefono });
+      const rutFormatted = formatRut(rutCleaned);
+      await api.post('/camioneros', { rut: rutFormatted, nombre, patente, telefono });
       Alert.alert('Éxito', 'Camionero registrado correctamente');
       navigation.goBack();
     } catch (error: any) {
@@ -106,9 +106,19 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
           <TextInput 
             style={styles.input} 
             value={rut} 
-            onChangeText={(text) => setRut(formatRut(text))} 
-            placeholder="Ej: 12.345.678-9" 
+            onChangeText={(text) => {
+              const cleaned = text.replace(/[^0-9kK]/gi, '').toUpperCase();
+              setRut(cleaned);
+            }} 
+            onBlur={() => setRut((current) => formatRut(cleanRut(current)))}
+            placeholder="Ej: 12345678-9" 
             autoCapitalize="characters"
+            autoComplete="off"
+            textContentType="none"
+            spellCheck={false}
+            maxLength={12}
+            selectionColor="#2C5EAD"
+            cursorColor="#2C5EAD"
           />
           
           <Text style={styles.label}>Nombre Completo</Text>
@@ -117,6 +127,8 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
             value={nombre} 
             onChangeText={setNombre} 
             placeholder="Nombre del conductor" 
+            selectionColor="#2C5EAD"
+            cursorColor="#2C5EAD"
           />
           
           <Text style={styles.label}>Patente del Camión</Text>
@@ -126,6 +138,8 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
             onChangeText={setPatente} 
             placeholder="Ej: ABCD-12 o AB-1234" 
             autoCapitalize="characters"
+            selectionColor="#2C5EAD"
+            cursorColor="#2C5EAD"
           />
           
           <Text style={styles.label}>Teléfono de Contacto</Text>
@@ -135,6 +149,8 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
             onChangeText={setTelefono} 
             keyboardType="phone-pad" 
             placeholder="Ej: +569..."
+            selectionColor="#2C5EAD"
+            cursorColor="#2C5EAD"
           />
 
           <TouchableOpacity style={styles.saveButton} onPress={registrarCamionero} disabled={loading}>

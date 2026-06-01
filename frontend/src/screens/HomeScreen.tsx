@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ActivityIndicator, Keyboard, Modal, Image, StatusBar, Platform, FlatList, Animated, Easing } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, User, ClipboardCheck, LayoutGrid, QrCode, X, LogOut, UserPlus, Store, Clock } from 'lucide-react-native';
+import { Search, User, ClipboardCheck, LayoutGrid, QrCode, X, LogOut, UserPlus, Store, Clock, MapPin } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import api from '../services/api';
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
 import { useAuth } from '../context/AuthContext';
-import { formatRut, validateRut } from '../utils/rut';
+import { cleanRut, formatRut, validateRut } from '../utils/rut';
 
 export default function HomeScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
@@ -28,6 +28,15 @@ export default function HomeScreen({ navigation }: any) {
   const [totalRecords, setTotalRecords] = useState(0);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const PER_PAGE = 5;
+
+  const formatFechaRegistro = (fecha: any) => {
+    if (!fecha) return '--/--/----';
+    const raw = String(fecha);
+    const isoDate = raw.length >= 10 ? raw.substring(0, 10) : raw;
+    const [year, month, day] = isoDate.split('-');
+    if (!year || !month || !day) return isoDate;
+    return `${day}-${month}-${year}`;
+  };
 
   useEffect(() => {
     fetchHistorial(0);
@@ -100,9 +109,18 @@ export default function HomeScreen({ navigation }: any) {
     buscarCamionero(rutFormateado);
   };
 
+  const formatRutInput = (text: string) => {
+    // Keep typing stable: only allow digits and K while typing.
+    const sanitized = text
+      .replace(/[^0-9kK]/g, '')
+      .toUpperCase()
+      .slice(0, 9);
+    setRut(sanitized);
+  };
+
   const buscarCamionero = async (rutABuscar?: string) => {
-    const rutFinal = rutABuscar || rut;
-    if (!rutFinal) return;
+    const rutFinal = cleanRut(rutABuscar || rut);
+    if (!rutFinal || rutFinal.length < 8) return;
 
     if (!validateRut(rutFinal)) {
       Alert.alert('Error', 'El RUT ingresado no es válido (dígito verificador incorrecto).');
@@ -111,7 +129,7 @@ export default function HomeScreen({ navigation }: any) {
 
     setLoading(true); setCamionero(null); Keyboard.dismiss();
     try {
-      const response = await api.get(`/camioneros/${rutFinal.replace(/\./g, '')}`);
+      const response = await api.get(`/camioneros/${rutFinal}`);
       setCamionero(response.data); setRut(formatRut(response.data.rut));
     } catch (error: any) {
       Alert.alert('Atención', 'Camionero no encontrado en la base de datos.');
@@ -161,9 +179,17 @@ export default function HomeScreen({ navigation }: any) {
             style={styles.input} 
             placeholder="RUT: 12.345.678-9" 
             value={rut} 
-            onChangeText={(text) => setRut(formatRut(text))}
+            onChangeText={formatRutInput}
+            onBlur={() => setRut((current) => formatRut(cleanRut(current)))}
             placeholderTextColor="#8E8E93"
             autoCapitalize="characters"
+            autoCorrect={false}
+            autoComplete="off"
+            textContentType="none"
+            spellCheck={false}
+            maxLength={12}
+            selectionColor="#2C5EAD"
+            cursorColor="#2C5EAD"
           />
           <TouchableOpacity style={styles.qrBtn} onPress={() => openScanner()} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <QrCode color="#2C5EAD" size={28} />
@@ -206,7 +232,17 @@ export default function HomeScreen({ navigation }: any) {
               <View style={styles.recordCard}>
                 <View style={styles.recordHeader}>
                   <Text style={styles.camioneroName}>{item.camionero_nombre}</Text>
-                  <Text style={styles.timeText}>{item.hora.substring(0, 5)} hrs</Text>
+                  <Text style={styles.timeText}>{item.hora_registro || item.hora?.substring(0, 5)} hrs</Text>
+                </View>
+                <View style={styles.locationRow}>
+                  <MapPin size={14} color="#2C5EAD" />
+                  <Text style={styles.locationText} numberOfLines={2}>{item.tienda_ubicacion || item.tienda_nombre}</Text>
+                </View>
+                <View style={styles.registeredRow}>
+                  <Clock size={13} color="#8E8E93" />
+                  <Text style={styles.registeredText}>
+                    Registrado: {item.fecha_registro || formatFechaRegistro(item.fecha)} {item.hora_registro || item.hora?.substring(0, 5)} hrs (Chile)
+                  </Text>
                 </View>
               </View>
             )}
@@ -325,6 +361,10 @@ const styles = StyleSheet.create({
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   camioneroName: { fontSize: 16, fontWeight: '700', color: '#1C1C1E' },
   timeText: { fontSize: 14, color: '#8E8E93', fontWeight: '500' },
+  locationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 6 },
+  locationText: { flex: 1, fontSize: 13, color: '#2C5EAD', fontWeight: '600' },
+  registeredRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 6 },
+  registeredText: { flex: 1, fontSize: 12, color: '#8E8E93', fontWeight: '600' },
   footer: { flexDirection: 'row', justifyContent: 'space-around', padding: 15, borderTopWidth: 1, borderColor: '#F2F2F7', backgroundColor: '#F9F9F9' },
   nav: { alignItems: 'center' },
   navText: { fontSize: 12, fontWeight: '700', color: '#2C5EAD', marginTop: 4 },

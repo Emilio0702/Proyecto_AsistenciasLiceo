@@ -16,8 +16,13 @@ router.get('/', async (req, res) => {
 // Buscar camionero por RUT
 router.get('/:rut', async (req, res) => {
     try {
-        const { rut } = req.params;
-        const result = await db.query('SELECT * FROM camioneros WHERE rut = $1', [rut]);
+        const normalizedRut = String(req.params.rut || '').replace(/[^0-9kK]/g, '').toUpperCase().trim();
+        const result = await db.query(
+            `SELECT * FROM camioneros
+             WHERE REGEXP_REPLACE(UPPER(TRIM(rut)), '[^0-9K]', '', 'g') = $1
+             LIMIT 1`,
+            [normalizedRut]
+        );
         if (result.rows.length === 0) {
             return res.status(404).json({ message: 'Camionero no encontrado' });
         }

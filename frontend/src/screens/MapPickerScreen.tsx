@@ -173,6 +173,8 @@ export default function MapPickerScreen({ navigation, route }: any) {
             onChangeText={setTextoBusqueda}
             onSubmitEditing={buscarDireccion}
             returnKeyType="search"
+            selectionColor="#2C5EAD"
+            cursorColor="#2C5EAD"
           />
           {textoBusqueda !== '' && (
             <TouchableOpacity onPress={() => { setTextoBusqueda(''); setResultadosBusqueda([]); }}>

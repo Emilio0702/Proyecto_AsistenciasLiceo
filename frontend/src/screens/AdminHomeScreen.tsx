@@ -208,6 +208,8 @@ export default function AdminHomeScreen({ navigation }: any) {
               placeholder="Buscar por rut, patente, camionero o tienda..." 
               value={searchText} 
               onChangeText={setSearchText} 
+              selectionColor="#2C5EAD"
+              cursorColor="#2C5EAD"
             />
             {searchText !== '' && (
               <TouchableOpacity onPress={() => setSearchText('')}>
@@ -272,12 +274,16 @@ export default function AdminHomeScreen({ navigation }: any) {
                   placeholder="Desde: 2026-01-01" 
                   value={fechaInicio} 
                   onChangeText={(val: string) => { setFechaInicio(val); setActiveDateFilter(''); }} 
+                  selectionColor="#2C5EAD"
+                  cursorColor="#2C5EAD"
                 />
                 <TextInput 
                   style={styles.dateInput} 
                   placeholder="Hasta: 2026-12-31" 
                   value={fechaFin} 
                   onChangeText={(val: string) => { setFechaFin(val); setActiveDateFilter(''); }} 
+                  selectionColor="#2C5EAD"
+                  cursorColor="#2C5EAD"
                 />
               </View>
               {(fechaInicio !== '' || fechaFin !== '' || selectedTienda !== '' || activeDateFilter !== '') && (
@@ -303,11 +309,16 @@ export default function AdminHomeScreen({ navigation }: any) {
                 <View style={styles.recordFooter}>
                   <View style={styles.footerItem}>
                     <Store size={14} color="#8E8E93" />
-                    <Text style={styles.footerText}>{item.tienda_nombre}</Text>
+                    <Text style={styles.footerText} numberOfLines={2}>{item.tienda_nombre}</Text>
                   </View>
                   <View style={styles.footerItem}>
                     <Clock size={14} color="#8E8E93" />
-                    <Text style={styles.footerText}>{item.hora.substring(0, 5)} hrs | {item.fecha.substring(0, 10)}</Text>
+                    <Text style={styles.footerTextTime}>
+                      {item.hora_registro || item.hora?.substring(0, 5)} hrs
+                    </Text>
+                    <Text style={styles.footerTextDate}>
+                      {item.fecha_registro || item.fecha?.substring(0, 10)}
+                    </Text>
                   </View>
                 </View>
               </View>
@@ -428,9 +439,11 @@ const styles = StyleSheet.create({
   camioneroName: { fontWeight: '700', fontSize: 16, color: '#1C1C1E' },
   statusTag: { backgroundColor: '#E7F9ED', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   statusText: { color: '#34C759', fontSize: 10, fontWeight: '900' },
-  recordFooter: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#F2F2F7', paddingTop: 12 },
-  footerItem: { flexDirection: 'row', alignItems: 'center', marginRight: 20 },
-  footerText: { fontSize: 13, color: '#8E8E93', marginLeft: 6, fontWeight: '600' },
+  recordFooter: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#F2F2F7', paddingTop: 12, gap: 12 },
+  footerItem: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  footerText: { flex: 1, fontSize: 13, color: '#8E8E93', marginLeft: 6, fontWeight: '600' },
+  footerTextTime: { fontSize: 13, color: '#8E8E93', marginLeft: 6, fontWeight: '700' },
+  footerTextDate: { fontSize: 12, color: '#AEAEB2', marginLeft: 6, fontWeight: '600' },
   emptyText: { textAlign: 'center', color: '#8E8E93', marginTop: 30, fontSize: 15 },
   // Logout modal
   logoutBackdrop: {

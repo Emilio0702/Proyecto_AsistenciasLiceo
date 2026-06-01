@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  StyleSheet, Text, View, TextInput, TouchableOpacity,
+  StyleSheet, Text, View, TextInput, TouchableOpacity, Alert,
   ActivityIndicator, Image, StatusBar, Platform,
-  Animated, Easing, KeyboardAvoidingView, ScrollView
+  Animated, Easing, KeyboardAvoidingView, ScrollView, Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ShieldCheck, ArrowLeft, Eye, EyeOff, AlertCircle, Mail, Lock } from 'lucide-react-native';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 export default function AdminLoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('');
@@ -16,6 +17,12 @@ export default function AdminLoginScreen({ navigation }: any) {
   const [errorMsg, setErrorMsg] = useState('');
   const [emailError, setEmailError] = useState(false);
   const [passwordError, setPasswordError] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<'email' | 'password' | 'resetEmail' | 'resetPassword' | 'resetConfirm' | null>(null);
   const { signIn } = useAuth();
 
   // Animaciones
@@ -63,6 +70,52 @@ export default function AdminLoginScreen({ navigation }: any) {
     setErrorMsg('');
     setEmailError(false);
     setPasswordError(false);
+  };
+
+  const openResetModal = () => {
+    setResetEmail(email);
+    setResetPassword('');
+    setResetPasswordConfirm('');
+    setShowResetModal(true);
+  };
+
+  const closeResetModal = () => {
+    setShowResetModal(false);
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetEmail || !resetPassword || !resetPasswordConfirm) {
+      Alert.alert('Completa los datos', 'Ingresa tu correo y la nueva contraseña dos veces.');
+      return;
+    }
+
+    if (resetPassword.length < 6) {
+      Alert.alert('Contraseña muy corta', 'La nueva contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    if (resetPassword !== resetPasswordConfirm) {
+      Alert.alert('Contraseñas distintas', 'Las contraseñas nuevas no coinciden.');
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      await api.post('/auth/reset-password', {
+        email: resetEmail.trim(),
+        password: resetPassword,
+      });
+
+      Alert.alert('Contraseña actualizada', 'Ya puedes iniciar sesión con la nueva contraseña.');
+      setShowResetModal(false);
+      setResetPassword('');
+      setResetPasswordConfirm('');
+    } catch (error: any) {
+      const raw = error?.response?.data?.message || error?.message || 'No se pudo restablecer la contraseña.';
+      Alert.alert('Error', raw);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const handleLogin = async () => {
@@ -146,6 +199,18 @@ export default function AdminLoginScreen({ navigation }: any) {
               <Text style={styles.subtitle}>Panel Administrativo Central</Text>
             </View>
 
+            <TouchableOpacity
+              style={styles.recoveryCard}
+              onPress={openResetModal}
+              activeOpacity={0.85}
+            >
+              <View style={styles.recoveryDot} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.recoveryTitle}>¿Olvidaste tu contraseña?</Text>
+                <Text style={styles.recoveryText}>Toca aquí para crear una nueva y seguir ingresando.</Text>
+              </View>
+            </TouchableOpacity>
+
             <Animated.View style={[styles.form, { transform: [{ translateX: shakeAnim }] }]}>
 
               {errorMsg !== '' && (
@@ -158,13 +223,17 @@ export default function AdminLoginScreen({ navigation }: any) {
               <View style={[styles.inputWrapper, emailError && styles.inputWrapperError]}>
                 <Mail size={18} color={emailError ? '#FF3B30' : '#8E8E93'} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, focusedField === 'email' && styles.inputFocused]}
                   placeholder="Correo administrativo"
                   placeholderTextColor="#AEAEB2"
                   value={email}
                   onChangeText={(v) => { setEmail(v); if (emailError) clearErrors(); }}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  selectionColor="#2C5EAD"
+                  cursorColor="#2C5EAD"
+                  onFocus={() => setFocusedField('email')}
+                  onBlur={() => setFocusedField((current) => current === 'email' ? null : current)}
                 />
               </View>
               {emailError && <Text style={styles.fieldError}>✗ Revisa el correo ingresado</Text>}
@@ -172,12 +241,16 @@ export default function AdminLoginScreen({ navigation }: any) {
               <View style={[styles.inputWrapper, passwordError && styles.inputWrapperError]}>
                 <Lock size={18} color={passwordError ? '#FF3B30' : '#8E8E93'} style={styles.inputIcon} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, focusedField === 'password' && styles.inputFocused]}
                   placeholder="Contraseña"
                   placeholderTextColor="#AEAEB2"
                   value={password}
                   onChangeText={(v) => { setPassword(v); if (passwordError) clearErrors(); }}
                   secureTextEntry={!showPassword}
+                  selectionColor="#2C5EAD"
+                  cursorColor="#2C5EAD"
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField((current) => current === 'password' ? null : current)}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
                   {showPassword
@@ -187,6 +260,10 @@ export default function AdminLoginScreen({ navigation }: any) {
                 </TouchableOpacity>
               </View>
               {passwordError && <Text style={styles.fieldError}>✗ Revisa la contraseña ingresada</Text>}
+
+              <TouchableOpacity onPress={openResetModal} style={styles.forgotPasswordBtn} activeOpacity={0.8}>
+                <Text style={styles.forgotPasswordText}>Olvidé mi contraseña</Text>
+              </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.button, loading && styles.buttonDisabled]}
@@ -200,6 +277,62 @@ export default function AdminLoginScreen({ navigation }: any) {
                 }
               </TouchableOpacity>
             </Animated.View>
+
+            <Modal visible={showResetModal} transparent animationType="fade" onRequestClose={closeResetModal}>
+              <View style={styles.modalBackdrop}>
+                <View style={styles.modalCard}>
+                  <Text style={styles.modalTitle}>Restablecer contraseña</Text>
+                  <Text style={styles.modalBody}>
+                    No se puede ver la contraseña anterior por seguridad. Puedes crear una nueva para esta cuenta.
+                  </Text>
+
+                  <TextInput
+                    style={[styles.modalInput, focusedField === 'resetEmail' && styles.inputFocused]}
+                    placeholder="Correo de la cuenta"
+                    placeholderTextColor="#AEAEB2"
+                    value={resetEmail}
+                    onChangeText={setResetEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    selectionColor="#2C5EAD"
+                    cursorColor="#2C5EAD"
+                    onFocus={() => setFocusedField('resetEmail')}
+                    onBlur={() => setFocusedField((current) => current === 'resetEmail' ? null : current)}
+                  />
+                  <TextInput
+                    style={[styles.modalInput, focusedField === 'resetPassword' && styles.inputFocused]}
+                    placeholder="Nueva contraseña"
+                    placeholderTextColor="#AEAEB2"
+                    value={resetPassword}
+                    onChangeText={setResetPassword}
+                    secureTextEntry
+                    selectionColor="#2C5EAD"
+                    cursorColor="#2C5EAD"
+                    onFocus={() => setFocusedField('resetPassword')}
+                    onBlur={() => setFocusedField((current) => current === 'resetPassword' ? null : current)}
+                  />
+                  <TextInput
+                    style={[styles.modalInput, focusedField === 'resetConfirm' && styles.inputFocused]}
+                    placeholder="Repite la nueva contraseña"
+                    placeholderTextColor="#AEAEB2"
+                    value={resetPasswordConfirm}
+                    onChangeText={setResetPasswordConfirm}
+                    secureTextEntry
+                    selectionColor="#2C5EAD"
+                    cursorColor="#2C5EAD"
+                    onFocus={() => setFocusedField('resetConfirm')}
+                    onBlur={() => setFocusedField((current) => current === 'resetConfirm' ? null : current)}
+                  />
+
+                  <TouchableOpacity style={[styles.modalPrimaryBtn, resetLoading && styles.buttonDisabled]} onPress={handleResetPassword} disabled={resetLoading} activeOpacity={0.85}>
+                    {resetLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalPrimaryText}>Restablecer contraseña</Text>}
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.modalSecondaryBtn} onPress={closeResetModal} activeOpacity={0.85}>
+                    <Text style={styles.modalSecondaryText}>Cancelar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Modal>
 
             <View style={styles.footer}>
               <ShieldCheck size={14} color="#8E8E93" />
@@ -236,6 +369,20 @@ const styles = StyleSheet.create({
   logoContainer: { alignItems: 'center', marginBottom: 40 },
   logo: { width: 220, height: 70 },
   subtitle: { fontSize: 16, color: '#8E8E93', fontWeight: '500', marginTop: -5 },
+  recoveryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#EEF5FF',
+    borderWidth: 1,
+    borderColor: '#CFE0FF',
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 18,
+  },
+  recoveryDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#2C5EAD' },
+  recoveryTitle: { fontSize: 15, fontWeight: '800', color: '#1C1C1E' },
+  recoveryText: { fontSize: 13, color: '#4A4A4A', marginTop: 2, lineHeight: 18 },
   form: { width: '100%', marginBottom: 30 },
   errorBanner: {
     flexDirection: 'row', alignItems: 'center',
@@ -248,11 +395,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F2F7', height: 60, borderRadius: 18,
     paddingHorizontal: 16, marginBottom: 4, borderWidth: 1.5, borderColor: '#E5E5EA',
   },
+  inputWrapperFocused: { borderColor: '#2C5EAD', backgroundColor: '#FFFFFF' },
   inputWrapperError: { borderColor: '#FF3B30', backgroundColor: '#FFF8F8' },
   inputIcon: { marginRight: 10 },
   input: { flex: 1, fontSize: 16, color: '#1C1C1E' },
+  inputFocused: { borderColor: '#2C5EAD', backgroundColor: '#FFFFFF' },
   eyeBtn: { padding: 4 },
   fieldError: { color: '#FF3B30', fontSize: 12, fontWeight: '600', marginBottom: 12, marginLeft: 6 },
+  forgotPasswordBtn: { alignSelf: 'flex-end', marginTop: 4, marginBottom: 8 },
+  forgotPasswordText: { color: '#2C5EAD', fontSize: 13, fontWeight: '700' },
   button: {
     height: 60, borderRadius: 18, backgroundColor: '#1C1C1E',
     justifyContent: 'center', alignItems: 'center', marginTop: 16,
@@ -263,4 +414,13 @@ const styles = StyleSheet.create({
   buttonText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   footerText: { fontSize: 12, color: '#8E8E93', marginLeft: 6, fontWeight: '500' },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 },
+  modalCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#E5E5EA' },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#1C1C1E', marginBottom: 8 },
+  modalBody: { fontSize: 14, lineHeight: 20, color: '#636366', marginBottom: 16 },
+  modalInput: { backgroundColor: '#F2F2F7', height: 54, borderRadius: 16, borderWidth: 1.5, borderColor: '#E5E5EA', paddingHorizontal: 14, marginBottom: 12, fontSize: 16, color: '#1C1C1E' },
+  modalPrimaryBtn: { height: 54, borderRadius: 16, backgroundColor: '#1C1C1E', justifyContent: 'center', alignItems: 'center', marginTop: 4 },
+  modalPrimaryText: { color: '#FFFFFF', fontSize: 16, fontWeight: '800' },
+  modalSecondaryBtn: { height: 48, justifyContent: 'center', alignItems: 'center', marginTop: 6 },
+  modalSecondaryText: { color: '#2C5EAD', fontSize: 15, fontWeight: '700' },
 });

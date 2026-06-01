@@ -88,4 +88,33 @@ router.post('/login', async (req, res) => {
     }
 });
 
+router.post('/reset-password', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ message: 'El correo y la nueva contraseña son obligatorios' });
+    }
+
+    if (password.length < 6) {
+        return res.status(400).json({ message: 'La nueva contraseña debe tener al menos 6 caracteres' });
+    }
+
+    try {
+        const userCheck = await db.query('SELECT id FROM usuarios WHERE email = $1', [email]);
+
+        if (userCheck.rows.length === 0) {
+            return res.status(404).json({ message: 'No encontramos una cuenta con ese correo' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+
+        await db.query('UPDATE usuarios SET password_hash = $1 WHERE email = $2', [passwordHash, email]);
+
+        res.json({ message: 'Contraseña actualizada correctamente' });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 module.exports = router;

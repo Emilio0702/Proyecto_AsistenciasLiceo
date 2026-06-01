@@ -3,7 +3,7 @@ const db = require('../db/db');
 
 const router = express.Router();
 
-const { format } = require('date-fns-tz');
+const { formatInTimeZone } = require('date-fns-tz');
 
 // Registrar una nueva colación
 router.post('/', async (req, res) => {
@@ -12,8 +12,8 @@ router.post('/', async (req, res) => {
     // Obtener hora local en Chile
     const timeZone = 'America/Santiago';
     const now = new Date();
-    const horaChile = format(now, 'HH:mm:ss', { timeZone });
-    const fechaChile = format(now, 'yyyy-MM-dd', { timeZone });
+    const horaChile = formatInTimeZone(now, timeZone, 'HH:mm:ss');
+    const fechaChile = formatInTimeZone(now, timeZone, 'yyyy-MM-dd');
 
     try {
         const result = await db.query(
@@ -41,7 +41,9 @@ router.get('/', async (req, res) => {
     try {
         const { limit, offset, tienda_id, search, fecha_inicio, fecha_fin } = req.query;
         let queryStr = `
-            SELECT r.*, c.nombre as camionero_nombre, c.rut as camionero_rut, c.patente as camionero_patente, t.nombre as tienda_nombre 
+            SELECT r.*, c.nombre as camionero_nombre, c.rut as camionero_rut, c.patente as camionero_patente, t.nombre as tienda_nombre, t.ubicacion as tienda_ubicacion,
+                   TO_CHAR(r.fecha, 'DD-MM-YYYY') as fecha_registro,
+                   TO_CHAR(r.hora, 'HH24:MI') as hora_registro
             FROM registros_colaciones r
             JOIN camioneros c ON r.camionero_id = c.id
             JOIN tiendas t ON r.tienda_id = t.id

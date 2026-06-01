@@ -153,7 +153,7 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
               </View>
               
               <Text style={styles.label}>Nombre de la Tienda</Text>
-              <TextInput style={styles.input} value={tienda} onChangeText={setTienda} placeholder="Ej: Tienda Central" />
+              <TextInput style={styles.input} value={tienda} onChangeText={setTienda} placeholder="Ej: Tienda Central" selectionColor="#2C5EAD" cursorColor="#2C5EAD" />
               
               <Text style={styles.label}>Ubicación en el Mapa</Text>
 
@@ -188,13 +188,13 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
           </View>
 
           <Text style={styles.label}>Nombre Completo</Text>
-          <TextInput style={styles.input} value={nombre} onChangeText={setNombre} placeholder="Nombre de la encargada" />
+          <TextInput style={styles.input} value={nombre} onChangeText={setNombre} placeholder="Nombre de la encargada" selectionColor="#2C5EAD" cursorColor="#2C5EAD" />
           
           <Text style={styles.label}>Correo Electrónico</Text>
-          <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="correo@ejemplo.com" />
+          <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="correo@ejemplo.com" selectionColor="#2C5EAD" cursorColor="#2C5EAD" />
           
           <Text style={styles.label}>Contraseña de Acceso</Text>
-          <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholder="Mínimo 6 caracteres" />
+          <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholder="Mínimo 6 caracteres" selectionColor="#2C5EAD" cursorColor="#2C5EAD" />
 
           <TouchableOpacity style={styles.saveButton} onPress={registrarUsuario} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : (
