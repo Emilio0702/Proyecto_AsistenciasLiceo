@@ -6,6 +6,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import api from '../services/api';
 import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
 import { useAuth } from '../context/AuthContext';
+import { formatRut, validateRut } from '../utils/rut';
 
 export default function HomeScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
@@ -94,17 +95,24 @@ export default function HomeScreen({ navigation }: any) {
   const handleBarCodeScanned = ({ data }: { data: string }) => {
     setIsScannerVisible(false);
     const rutExtraido = extraerRutDeQR(data);
-    setRut(rutExtraido);
-    buscarCamionero(rutExtraido);
+    const rutFormateado = formatRut(rutExtraido);
+    setRut(rutFormateado);
+    buscarCamionero(rutFormateado);
   };
 
   const buscarCamionero = async (rutABuscar?: string) => {
     const rutFinal = rutABuscar || rut;
     if (!rutFinal) return;
+
+    if (!validateRut(rutFinal)) {
+      Alert.alert('Error', 'El RUT ingresado no es válido (dígito verificador incorrecto).');
+      return;
+    }
+
     setLoading(true); setCamionero(null); Keyboard.dismiss();
     try {
       const response = await api.get(`/camioneros/${rutFinal.replace(/\./g, '')}`);
-      setCamionero(response.data); setRut(response.data.rut);
+      setCamionero(response.data); setRut(formatRut(response.data.rut));
     } catch (error: any) {
       Alert.alert('Atención', 'Camionero no encontrado en la base de datos.');
     } finally { setLoading(false); }
@@ -153,8 +161,9 @@ export default function HomeScreen({ navigation }: any) {
             style={styles.input} 
             placeholder="RUT: 12.345.678-9" 
             value={rut} 
-            onChangeText={setRut}
+            onChangeText={(text) => setRut(formatRut(text))}
             placeholderTextColor="#8E8E93"
+            autoCapitalize="characters"
           />
           <TouchableOpacity style={styles.qrBtn} onPress={() => openScanner()} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <QrCode color="#2C5EAD" size={28} />

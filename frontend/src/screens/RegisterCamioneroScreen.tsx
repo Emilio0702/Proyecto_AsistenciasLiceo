@@ -4,10 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Truck, ArrowLeft, Save, User, QrCode, X } from 'lucide-react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import api from '../services/api';
+import { formatRut, validateRut } from '../utils/rut';
 
 export default function RegisterCamioneroScreen({ navigation, route }: any) {
   const [loading, setLoading] = useState(false);
-  const [rut, setRut] = useState(route.params?.rut || '');
+  const [rut, setRut] = useState(route.params?.rut ? formatRut(route.params.rut) : '');
   const [nombre, setNombre] = useState('');
   const [patente, setPatente] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -24,14 +25,14 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
       if (data.includes('registrocivil.cl')) {
         const urlParams = new URLSearchParams(data.split('?')[1]);
         const rutExtraido = urlParams.get('rut');
-        if (rutExtraido) setRut(rutExtraido);
-        Alert.alert('Cédula detectada', `Se ha extraído el RUT: ${rutExtraido}. Por favor completa el nombre.`);
+        if (rutExtraido) setRut(formatRut(rutExtraido));
+        Alert.alert('Cédula detectada', `Se ha extraído el RUT: ${rutExtraido ? formatRut(rutExtraido) : ''}. Por favor completa el nombre.`);
       } else {
         // Intento de extraer RUT de texto plano o formato genérico
         const match = data.match(/(\d{7,8})-([\dkK])/);
         if (match) {
-          setRut(match[0]);
-          Alert.alert('RUT detectado', `Se ha extraído: ${match[0]}`);
+          setRut(formatRut(match[0]));
+          Alert.alert('RUT detectado', `Se ha extraído: ${formatRut(match[0])}`);
         }
       }
     } catch (e) {
@@ -55,9 +56,17 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
       Alert.alert('Error', 'RUT y Nombre son obligatorios');
       return;
     }
+
+    if (!validateRut(rut)) {
+      Alert.alert('Error', 'El RUT ingresado no es válido (dígito verificador incorrecto).');
+      return;
+    }
+
     setLoading(true);
     try {
-      await api.post('/camioneros', { rut, nombre, patente, telefono });
+      // Guardar el RUT sin puntos (ej: 12345678-9) para consistencia en la base de datos
+      const rutCleaned = rut.replace(/\./g, '');
+      await api.post('/camioneros', { rut: rutCleaned, nombre, patente, telefono });
       Alert.alert('Éxito', 'Camionero registrado correctamente');
       navigation.goBack();
     } catch (error: any) {
@@ -97,8 +106,9 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
           <TextInput 
             style={styles.input} 
             value={rut} 
-            onChangeText={setRut} 
+            onChangeText={(text) => setRut(formatRut(text))} 
             placeholder="Ej: 12.345.678-9" 
+            autoCapitalize="characters"
           />
           
           <Text style={styles.label}>Nombre Completo</Text>

@@ -57,6 +57,7 @@ A continuación, se detalla el nivel de madurez y desarrollo de cada módulo del
 | **Dashboard de Administración** | Panel móvil para administradores con buscador en tiempo real y estadísticas generales. | **100%** | Desarrollado con filtros dinámicos rápidos (Hoy, Mes, Año) y filtros por Tienda. |
 | **Gestión de Entidades** | Formularios para registrar nuevos transportistas (Camioneros) y personal de tienda. | **100%** | Implementado. Permite crear camioneros con patente/teléfono y encargadas asignadas a tiendas específicas. |
 | **Reportes y Auditoría** | Generación y descarga directa de plantilla Excel con todos los registros históricos. | **100%** | Desarrollado en backend utilizando la librería `exceljs`. |
+| **Validación y Formato de RUT** | Validación matemática del RUT (Módulo 11) y formateo visual dinámico (`XX.XXX.XXX-X`). | **100%** | Completamente integrado en pantallas de Registro de Camioneros y Búsqueda de Colaciones. |
 | **Desconexión por Inactividad** | Mecanismo que protege la sesión en caso de abandono del dispositivo de tienda. | **70%** | Redirige visualmente a la pantalla de roles tras 5 minutos, pero requiere mejoras en la expiración del token. |
 
 ---
@@ -76,9 +77,8 @@ Para realizar el paso a producción de forma exitosa y segura, es necesario subs
 > *   *Solución:* Modificar el hook para que invoque formalmente a la función `signOut()` del contexto de autenticación, limpiando los tokens y el estado del usuario por completo.
 
 > [!NOTE]
-> **3. Validación Formal de RUT Chileno**
-> *   *Problema:* El ingreso manual de RUT acepta cualquier cadena de texto. No valida que sea un RUT real ni comprueba el dígito verificador (módulo 11).
-> *   *Solución:* Integrar una función de validación del RUT tanto en el registro de camioneros como en la búsqueda manual del frontend, formateando automáticamente a `XX.XXX.XXX-X`.
+> **3. Validación Formal de RUT Chileno [IMPLEMENTADO]**
+> *   *Estado:* Resuelto. Se creó un módulo de utilidades (`rut.ts`) que limpia, formatea dinámicamente (`XX.XXX.XXX-X`) y valida matemáticamente el RUT con el algoritmo Módulo 11 en los flujos de registro de camioneros y búsquedas.
 
 > [!IMPORTANT]
 > **4. Soporte Offline (Modo Contingencia)**
