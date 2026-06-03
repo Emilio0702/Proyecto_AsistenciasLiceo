@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, Image, Linking, Alert, StatusBar, Platform, ScrollView, Modal, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Clock, Store, Search, UserPlus, Truck, Download, LogOut, Settings, ChevronRight, Filter, X } from 'lucide-react-native';
+import { User, Clock, Store, Search, UserPlus, Truck, Download, LogOut, Settings, ChevronRight, Filter, X, Utensils } from 'lucide-react-native';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -183,7 +183,7 @@ export default function AdminHomeScreen({ navigation }: any) {
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
             <Text style={styles.statVal}>{totalRecords}</Text>
-            <Text style={styles.statLab}>Colaciones Totales</Text>
+            <Text style={styles.statLab}>Servicios Entregados Totales</Text>
           </View>
           <TouchableOpacity style={styles.excelBtn} onPress={handleDownloadExcel}>
             <Download color="#fff" size={20} />
@@ -194,7 +194,7 @@ export default function AdminHomeScreen({ navigation }: any) {
         {/* LISTADO DE REGISTROS */}
         <View style={styles.historySection}>
           <View style={styles.historyHeaderRow}>
-            <Text style={styles.historyTitle}>Historial Reciente</Text>
+            <Text style={styles.historyTitle}>Servicios entregados recientemente</Text>
             <TouchableOpacity style={styles.filterToggleBtn} onPress={() => setIsFilterExpanded(!isFilterExpanded)}>
               <Filter size={18} color={isFilterExpanded ? "#2C5EAD" : "#8E8E93"} />
               <Text style={[styles.filterToggleText, isFilterExpanded && { color: "#2C5EAD", fontWeight: '700' }]}>Filtros</Text>
@@ -304,7 +304,9 @@ export default function AdminHomeScreen({ navigation }: any) {
                     <View style={styles.avatarMini}><User size={14} color="#2C5EAD" /></View>
                     <Text style={styles.camioneroName}>{item.camionero_nombre}</Text>
                   </View>
-                  <View style={styles.statusTag}><Text style={styles.statusText}>REGISTRADO</Text></View>
+                  <View style={[styles.statusTag, {backgroundColor: '#EBF2FA'}]}>
+                    <Text style={[styles.statusText, {color: '#2C5EAD'}]}>{item.tipo_servicio}</Text>
+                  </View>
                 </View>
                 <View style={styles.recordFooter}>
                   <View style={styles.footerItem}>
@@ -416,8 +418,18 @@ const styles = StyleSheet.create({
   historySection: { marginBottom: 20 },
   historyHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   historyTitle: { fontSize: 18, fontWeight: '800', color: '#1C1C1E' },
-  filterToggleBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F2F2F7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  filterToggleText: { fontSize: 14, color: '#8E8E93', fontWeight: '600', marginLeft: 6 },
+  filterToggleBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#F2F2F7', 
+    paddingHorizontal: 12, 
+    paddingVertical: 8, 
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+    gap: 4
+  },
+  filterToggleText: { fontSize: 13, color: '#48484A', fontWeight: '700' },
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F2F2F7', paddingHorizontal: 15, height: 55, borderRadius: 16, marginBottom: 10, borderWidth: 1, borderColor: '#E5E5EA' },
   searchInput: { flex: 1, marginLeft: 10, fontSize: 16, color: '#1C1C1E' },
   filterExpandedContainer: { backgroundColor: '#F8F9FA', padding: 15, borderRadius: 16, marginBottom: 15, borderWidth: 1, borderColor: '#E5E5EA' },
@@ -437,8 +449,8 @@ const styles = StyleSheet.create({
   userRow: { flexDirection: 'row', alignItems: 'center' },
   avatarMini: { width: 28, height: 28, borderRadius: 10, backgroundColor: '#EBF2FA', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   camioneroName: { fontWeight: '700', fontSize: 16, color: '#1C1C1E' },
-  statusTag: { backgroundColor: '#E7F9ED', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  statusText: { color: '#34C759', fontSize: 10, fontWeight: '900' },
+  statusTag: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  statusText: { fontSize: 10, fontWeight: '900' },
   recordFooter: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#F2F2F7', paddingTop: 12, gap: 12 },
   footerItem: { flex: 1, flexDirection: 'row', alignItems: 'center' },
   footerText: { flex: 1, fontSize: 13, color: '#8E8E93', marginLeft: 6, fontWeight: '600' },
@@ -446,41 +458,14 @@ const styles = StyleSheet.create({
   footerTextDate: { fontSize: 12, color: '#AEAEB2', marginLeft: 6, fontWeight: '600' },
   emptyText: { textAlign: 'center', color: '#8E8E93', marginTop: 30, fontSize: 15 },
   // Logout modal
-  logoutBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  logoutSheet: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 28, borderTopRightRadius: 28,
-    padding: 28, paddingBottom: 40,
-    alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1, shadowRadius: 20, elevation: 20,
-  },
-  logoutHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: '#E5E5EA', marginBottom: 24,
-  },
-  logoutIconWrap: {
-    width: 64, height: 64, borderRadius: 20,
-    backgroundColor: '#FFF2F2',
-    justifyContent: 'center', alignItems: 'center', marginBottom: 16,
-  },
+  logoutBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)' },
+  logoutSheet: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 28, paddingBottom: 40, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 20 },
+  logoutHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: '#E5E5EA', marginBottom: 24 },
+  logoutIconWrap: { width: 64, height: 64, borderRadius: 20, backgroundColor: '#FFF2F2', justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
   logoutTitle: { fontSize: 22, fontWeight: '800', color: '#1C1C1E', marginBottom: 8 },
   logoutSubtitle: { fontSize: 15, color: '#8E8E93', textAlign: 'center', marginBottom: 28, lineHeight: 22 },
-  logoutConfirmBtn: {
-    width: '100%', height: 56, borderRadius: 16,
-    backgroundColor: '#FF3B30', flexDirection: 'row',
-    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
-    elevation: 3,
-  },
+  logoutConfirmBtn: { width: '100%', height: 56, borderRadius: 16, backgroundColor: '#FF3B30', flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginBottom: 12, elevation: 3 },
   logoutConfirmText: { color: '#fff', fontSize: 17, fontWeight: '800', marginLeft: 10 },
-  logoutCancelBtn: {
-    width: '100%', height: 56, borderRadius: 16,
-    backgroundColor: '#F2F2F7',
-    justifyContent: 'center', alignItems: 'center',
-  },
+  logoutCancelBtn: { width: '100%', height: 56, borderRadius: 16, backgroundColor: '#F2F2F7', justifyContent: 'center', alignItems: 'center' },
   logoutCancelText: { color: '#1C1C1E', fontSize: 17, fontWeight: '700' },
 });

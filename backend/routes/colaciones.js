@@ -7,7 +7,7 @@ const { formatInTimeZone } = require('date-fns-tz');
 
 // Registrar una nueva colación
 router.post('/', async (req, res) => {
-    const { camionero_id, tienda_id, usuario_id } = req.body;
+    const { camionero_id, tienda_id, usuario_id, tipo_servicio } = req.body;
     
     // Obtener hora local en Chile
     const timeZone = 'America/Santiago';
@@ -17,8 +17,8 @@ router.post('/', async (req, res) => {
 
     try {
         const result = await db.query(
-            'INSERT INTO registros_colaciones (camionero_id, tienda_id, usuario_id, fecha, hora) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [camionero_id, tienda_id, usuario_id, fechaChile, horaChile]
+            'INSERT INTO registros_colaciones (camionero_id, tienda_id, usuario_id, fecha, hora, tipo_servicio) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+            [camionero_id, tienda_id, usuario_id, fechaChile, horaChile, tipo_servicio]
         );
         res.status(201).json({
             message: 'Colación registrada exitosamente',
@@ -27,7 +27,7 @@ router.post('/', async (req, res) => {
     } catch (error) {
         if (error.code === '23505') { // Error de duplicado (Unique violation)
             return res.status(400).json({ 
-                message: 'Error: El camionero ya registró una colación el día de hoy.' 
+                message: `Error: El camionero ya registró ${tipo_servicio} el día de hoy.` 
             });
         }
         res.status(500).json({ error: error.message });
@@ -43,7 +43,8 @@ router.get('/', async (req, res) => {
         let queryStr = `
             SELECT r.*, c.nombre as camionero_nombre, c.rut as camionero_rut, c.patente as camionero_patente, t.nombre as tienda_nombre, t.ubicacion as tienda_ubicacion,
                    TO_CHAR(r.fecha, 'DD-MM-YYYY') as fecha_registro,
-                   TO_CHAR(r.hora, 'HH24:MI') as hora_registro
+                   TO_CHAR(r.hora, 'HH24:MI') as hora_registro,
+                   r.tipo_servicio
             FROM registros_colaciones r
             JOIN camioneros c ON r.camionero_id = c.id
             JOIN tiendas t ON r.tienda_id = t.id

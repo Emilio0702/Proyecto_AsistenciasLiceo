@@ -1,8 +1,0 @@
-{
-    "chat.tools.terminal.autoApprove": {
-        "/^cd backend; node -e \"const db = require\\('\\./db/db'\\); db\\.query\\('SELECT email, rol FROM usuarios'\\)\\.then\\(res => \\{ console\\.log\\(res\\.rows\\); process\\.exit\\(\\); \\}\\)\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        }
-    }
-}
