@@ -1,10 +1,11 @@
 const express = require('express');
 const db = require('../db/db');
+const { verifyToken } = require('../src/middleware/auth');
 
 const router = express.Router();
 
-// Obtener todos los camioneros
-router.get('/', async (req, res) => {
+// Obtener todos los camioneros (Protegido)
+router.get('/', verifyToken, async (req, res) => {
     try {
         const result = await db.query('SELECT * FROM camioneros ORDER BY nombre ASC');
         res.json(result.rows);
@@ -13,8 +14,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Buscar camionero por RUT
-router.get('/:rut', async (req, res) => {
+// Buscar camionero por RUT (Protegido)
+router.get('/:rut', verifyToken, async (req, res) => {
     try {
         const normalizedRut = String(req.params.rut || '').replace(/[^0-9kK]/g, '').toUpperCase().trim();
         const result = await db.query(
@@ -32,8 +33,8 @@ router.get('/:rut', async (req, res) => {
     }
 });
 
-// Registrar nuevo camionero
-router.post('/', async (req, res) => {
+// Registrar nuevo camionero (Protegido)
+router.post('/', verifyToken, async (req, res) => {
     const { rut, nombre, patente, telefono, empresa } = req.body;
     try {
         const result = await db.query(

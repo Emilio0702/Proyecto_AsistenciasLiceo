@@ -1,14 +1,21 @@
 const express = require('express');
 const db = require('../db/db');
+const { verifyToken } = require('../src/middleware/auth');
 
 const router = express.Router();
 
 const { formatInTimeZone } = require('date-fns-tz');
 
 // Registrar una nueva colación
-router.post('/', async (req, res) => {
-    const { camionero_id, tienda_id, usuario_id, tipo_servicio } = req.body;
+router.post('/', verifyToken, async (req, res) => {
+    let { camionero_id, tienda_id, usuario_id, tipo_servicio } = req.body;
     
+    // Seguridad: Si es encargada, forzar su tienda_id y su usuario_id
+    if (req.user.rol === 'encargada') {
+        tienda_id = req.user.tienda_id;
+        usuario_id = req.user.id;
+    }
+
     // Obtener hora local en Chile
     const timeZone = 'America/Santiago';
     const now = new Date();
@@ -37,9 +44,15 @@ router.post('/', async (req, res) => {
 const ExcelJS = require('exceljs');
 
 // Obtener historial de colaciones con paginación opcional y filtros
-router.get('/', async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
     try {
-        const { limit, offset, tienda_id, search, fecha_inicio, fecha_fin } = req.query;
+        let { limit, offset, tienda_id, search, fecha_inicio, fecha_fin } = req.query;
+        
+        // Seguridad: Si es encargada, solo puede ver su tienda
+        if (req.user.rol === 'encargada') {
+            tienda_id = req.user.tienda_id;
+        }
+
         let queryStr = `
             SELECT r.*, c.nombre as camionero_nombre, c.rut as camionero_rut, c.patente as camionero_patente, t.nombre as tienda_nombre, t.ubicacion as tienda_ubicacion,
                    TO_CHAR(r.fecha, 'DD-MM-YYYY') as fecha_registro,
@@ -116,8 +129,17 @@ router.get('/', async (req, res) => {
 });
 
 // Exportar reporte Excel
-router.get('/reporte/excel', async (req, res) => {
+router.get('/reporte/excel', verifyToken, async (req, res) => {
     try {
+        let tiendaFilter = '';
+        let params = [];
+
+        // Seguridad: Si es encargada, filtrar solo su tienda
+        if (req.user.rol === 'encargada') {
+            tiendaFilter = 'WHERE r.tienda_id = $1';
+            params.push(req.user.tienda_id);
+        }
+
         const result = await db.query(`
             SELECT r.id, c.nombre as camionero_nombre, c.rut, t.nombre as tienda_nombre, 
                    u.nombre as usuario_nombre, r.fecha, r.hora
@@ -125,8 +147,9 @@ router.get('/reporte/excel', async (req, res) => {
             JOIN camioneros c ON r.camionero_id = c.id
             JOIN tiendas t ON r.tienda_id = t.id
             JOIN usuarios u ON r.usuario_id = u.id
+            ${tiendaFilter}
             ORDER BY r.fecha DESC, r.hora DESC
-        `);
+        `, params);
 
         const workbook = new ExcelJS.Workbook();
         const worksheet = workbook.addWorksheet('Colaciones');

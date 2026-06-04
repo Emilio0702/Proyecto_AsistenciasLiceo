@@ -2,12 +2,13 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('../db/db');
+const { verifyToken, isAdmin } = require('../src/middleware/auth');
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'serviterra_secret_key_2024';
 
-// Registro de usuario
-router.post('/register', async (req, res) => {
+// Registro de usuario (Solo accesible para Administradores)
+router.post('/register', verifyToken, isAdmin, async (req, res) => {
     const { email, password, nombre, tienda_id, rol } = req.body;
 
     try {
@@ -36,7 +37,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// Login de usuario
+// Login de usuario (Público)
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -54,12 +55,9 @@ router.post('/login', async (req, res) => {
         }
 
         const user = result.rows[0];
-        console.log('Usuario encontrado:', user.email);
-        console.log('Hash en DB:', user.password_hash);
 
         // Verificar contraseña
         const isMatch = await bcrypt.compare(password, user.password_hash);
-        console.log('¿Contraseña coincide?:', isMatch);
         
         if (!isMatch) {
             return res.status(401).json({ message: 'Credenciales inválidas' });

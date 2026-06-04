@@ -1,30 +1,9 @@
--- 1. Insertar Tiendas de ejemplo
-INSERT INTO tiendas (nombre, ubicacion) VALUES 
-('Tienda Central - Santiago', 'Av. Libertador 123'),
-('Tienda Norte - Antofagasta', 'Ruta 5 Norte KM 1300'),
-('Tienda Sur - Concepción', 'Calle Logística 456')
-ON CONFLICT DO NOTHING;
+-- Script de inicialización limpia para producción
+-- Solo incluye el usuario administrador inicial
 
--- 2. Insertar Camioneros de ejemplo
-INSERT INTO camioneros (rut, nombre, patente) VALUES 
-('12345678-9', 'Juan Pérez', 'ABCD-12'),
-('87654321-0', 'Pedro Rodríguez', 'XY-9876'),
-('11223344-5', 'Luis Morales', 'FG-4455')
-ON CONFLICT (rut) DO NOTHING;
-
--- 3. Insertar Usuario (Encargada) de ejemplo
-INSERT INTO usuarios (email, password_hash, nombre, tienda_id) VALUES 
-('encargada1@serviterra.com', '$2b$10$5EDfw0N7hv0QdXF3GW8qRONQOXeP0.v7qLnsESUUFBlidJ1090Mc2', 'Ana García', (SELECT id FROM tiendas LIMIT 1))
-ON CONFLICT (email) DO NOTHING;
-
--- 4. Insertar Usuario (Admin) de ejemplo
+-- 1. Insertar Usuario (Admin) inicial
+-- Email: admin@serviterra.com
+-- Password: El mismo que estaba configurado anteriormente
 INSERT INTO usuarios (email, password_hash, nombre, rol) VALUES 
 ('admin@serviterra.com', '$2b$10$5EDfw0N7hv0QdXF3GW8qRONQOXeP0.v7qLnsESUUFBlidJ1090Mc2', 'Administrador Principal', 'admin')
 ON CONFLICT (email) DO NOTHING;
-
--- 4. Consulta para verificar IDs (Útil para las pruebas de Postman/API)
-SELECT 'TIENDAS' as tabla, id, nombre FROM tiendas
-UNION ALL
-SELECT 'CAMIONEROS', id, nombre FROM camioneros
-UNION ALL
-SELECT 'USUARIOS', id, nombre FROM usuarios;
