@@ -9,6 +9,7 @@ interface User {
   rol: string;
   pension_id: number | null;
   pension_nombre: string | null;
+  pension_ubicacion: string | null;
 }
 
 interface AuthContextData {

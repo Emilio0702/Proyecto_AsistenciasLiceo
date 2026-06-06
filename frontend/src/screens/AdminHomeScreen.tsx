@@ -1,17 +1,38 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, Image, Linking, Alert, StatusBar, Platform, ScrollView, Modal, Animated } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { User, Clock, Store, Search, UserPlus, Truck, Download, LogOut, Settings, ChevronRight, Filter, X, Utensils } from 'lucide-react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { User, Clock, Store, Search, UserPlus, Truck, Download, LogOut, Settings, ChevronRight, Filter, X, Utensils, Printer } from 'lucide-react-native';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { CustomAlert } from '../components/CustomAlert';
 
 const serviterraLogo = require('../../assets/serviterra.jpg');
 
 export default function AdminHomeScreen({ navigation }: any) {
   const { user, signOut } = useAuth();
+  const { top: topInset, bottom: bottomInset } = useSafeAreaInsets();
   const nombreUsuario = user?.nombre || 'Admin';
+  
   const [registros, setRegistros] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [page, setPage] = useState(0);
+  const [searchText, setSearchText] = useState('');
+  
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [pensiones, setPensiones] = useState<any[]>([]);
+  const [selectedPension, setSelectedPension] = useState('');
+  const [activeDateFilter, setActiveDateFilter] = useState('');
+  
+  const [voucherData, setVoucherData] = useState<any>(null);
+  const [showVoucher, setShowVoucher] = useState(false);
+  const [alert, setAlert] = useState<{ visible: boolean; title: string; message: string; type: 'success' | 'error' }>({ visible: false, title: '', message: '', type: 'success' });
+
+  const PER_PAGE = 10;
 
   // Logout modal
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -37,18 +58,6 @@ export default function AdminHomeScreen({ navigation }: any) {
     closeLogoutModal();
     setTimeout(async () => { await signOut(); }, 220);
   };
-  const [totalRecords, setTotalRecords] = useState(0);
-  const [page, setPage] = useState(0);
-  const [searchText, setSearchText] = useState('');
-  
-  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-  const [fechaInicio, setFechaInicio] = useState('');
-  const [fechaFin, setFechaFin] = useState('');
-  const [pensiones, setPensiones] = useState<any[]>([]);
-  const [selectedPension, setSelectedPension] = useState('');
-  const [activeDateFilter, setActiveDateFilter] = useState('');
-  
-  const PER_PAGE = 10;
 
   useEffect(() => {
     fetchPensiones();
@@ -104,7 +113,7 @@ export default function AdminHomeScreen({ navigation }: any) {
       if (pageNumber === 0) setRegistros(newData);
       else setRegistros([...(registros || []), ...newData]);
       setTotalRecords(response.data.total || 0);
-      setPage(pageNumber);
+      pageNumber === 0 ? setPage(0) : setPage(pageNumber);
     } catch (error) {
       console.error(error);
     } finally {
@@ -117,6 +126,83 @@ export default function AdminHomeScreen({ navigation }: any) {
     Linking.openURL(url).catch(() => {
       Alert.alert('Error', 'No se pudo abrir el enlace de descarga.');
     });
+  };
+
+  const handleOpenVoucherFromHistory = (item: any) => {
+    setVoucherData({
+      ...item,
+      fecha_f: item.fecha_registro,
+      hora_f: item.hora_registro
+    });
+    setShowVoucher(true);
+  };
+
+  const generateVoucherHTML = () => {
+    if (!voucherData) return '';
+    return `
+      <html>
+        <head>
+          <style>
+            body { font-family: 'Helvetica', sans-serif; padding: 30px; color: #1C1C1E; }
+            .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #2C5EAD; padding-bottom: 15px; }
+            .brand-text { font-size: 28px; font-weight: 900; color: #2C5EAD; letter-spacing: -1px; margin: 0; }
+            .brand-sub { font-size: 14px; font-weight: 600; color: #8E8E93; margin-top: -5px; }
+            h1 { color: #1C1C1E; margin: 15px 0 0 0; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; }
+            .details { margin-top: 20px; background: #f2f2f7; padding: 25px; border-radius: 15px; border: 1px solid #e5e5ea; }
+            .item { margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #d1d1d6; padding-bottom: 8px; display: flex; justify-content: space-between; }
+            .item:last-child { border-bottom: none; }
+            .item strong { color: #8E8E93; font-weight: 600; text-transform: uppercase; font-size: 11px; }
+            .item span { font-weight: 700; color: #1C1C1E; text-align: right; }
+            .signature-section { margin-top: 60px; display: flex; flex-direction: column; align-items: center; }
+            .signature-line { width: 220px; border-top: 1.5px solid #1C1C1E; margin-bottom: 8px; }
+            .signature-text { font-size: 12px; font-weight: 700; color: #1C1C1E; }
+            .signature-rut { font-size: 11px; color: #8E8E93; }
+            .footer { margin-top: 40px; text-align: center; font-size: 11px; color: #aeaeb2; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <p class="brand-text">SERVITERRA</p>
+            <p class="brand-sub">Gestión de Colaciones</p>
+            <h1>Voucher de Servicio</h1>
+          </div>
+          <div class="details">
+            <div class="item"><strong>Camionero</strong> <span>${voucherData.camionero_nombre}</span></div>
+            <div class="item"><strong>RUT</strong> <span>${voucherData.camionero_rut || voucherData.rut}</span></div>
+            <div class="item"><strong>Empresa</strong> <span>${voucherData.camionero_empresa || voucherData.empresa || 'No especificada'}</span></div>
+            <div class="item"><strong>Servicio</strong> <span>${voucherData.tipo_servicio}</span></div>
+            <div class="item"><strong>Pensión</strong> <span>${voucherData.pension_nombre}</span></div>
+            <div class="item"><strong>Fecha</strong> <span>${voucherData.fecha_f}</span></div>
+            <div class="item"><strong>Hora</strong> <span>${voucherData.hora_f} hrs</span></div>
+          </div>
+          <div class="signature-section">
+            <div class="signature-line"></div>
+            <p class="signature-text">Firma del Transportista</p>
+            <p class="signature-rut">RUT: ${voucherData.camionero_rut || voucherData.rut}</p>
+          </div>
+          <div class="footer">
+            <p>Este comprobante certifica la recepción del servicio mencionado.<br>Copia para control administrativo ServiTerra.</p>
+          </div>
+        </body>
+      </html>
+    `;
+  };
+
+  const handlePrint = async () => {
+    try {
+        await Print.printAsync({ html: generateVoucherHTML() });
+    } catch (error) {
+        setAlert({ visible: true, title: 'Error', message: 'No se pudo iniciar la impresión.', type: 'error' });
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+        const { uri } = await Print.printToFileAsync({ html: generateVoucherHTML() });
+        await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf', dialogTitle: 'Descargar Voucher' });
+    } catch (error) {
+        setAlert({ visible: true, title: 'Error', message: 'No se pudo generar el archivo PDF.', type: 'error' });
+    }
   };
 
   return (
@@ -249,7 +335,7 @@ export default function AdminHomeScreen({ navigation }: any) {
               </View>
 
               <Text style={[styles.filterLabel, { marginTop: 15 }]}>Filtrar por Pensión</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tiendasScroll} contentContainerStyle={{ gap: 10 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pensionesScroll} contentContainerStyle={{ gap: 10 }}>
                 <TouchableOpacity 
                   style={[styles.quickFilterBtn, selectedPension === '' && styles.quickFilterBtnActive]} 
                   onPress={() => setSelectedPension('')}
@@ -298,7 +384,7 @@ export default function AdminHomeScreen({ navigation }: any) {
             <ActivityIndicator size="large" color="#2C5EAD" style={{ marginTop: 20 }} />
           ) : (
             (registros || []).map((item: any) => (
-              <View key={item.id.toString()} style={styles.recordCard}>
+              <TouchableOpacity key={item.id.toString()} style={styles.recordCard} onPress={() => handleOpenVoucherFromHistory(item)} activeOpacity={0.7}>
                 <View style={styles.recordHeader}>
                   <View style={styles.userRow}>
                     <View style={styles.avatarMini}><User size={14} color="#2C5EAD" /></View>
@@ -323,7 +409,7 @@ export default function AdminHomeScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))
           )}
 
@@ -338,6 +424,72 @@ export default function AdminHomeScreen({ navigation }: any) {
           )}
         </View>
       </ScrollView>
+
+      {/* Modal Voucher */}
+      <Modal visible={showVoucher} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+            <View style={styles.voucherCard}>
+                <View style={styles.voucherHeader}>
+                  <Text style={styles.voucherBrand}>SERVITERRA</Text>
+                  <Text style={styles.voucherTitle}>Comprobante Administrativo</Text>
+                </View>
+                
+                {voucherData && (
+                    <View style={styles.voucherBody}>
+                        <View style={styles.voucherRow}>
+                          <Text style={styles.voucherLabel}>CAMIONERO</Text>
+                          <Text style={styles.voucherValue}>{voucherData.camionero_nombre}</Text>
+                        </View>
+                        <View style={styles.voucherRow}>
+                          <Text style={styles.voucherLabel}>RUT</Text>
+                          <Text style={styles.voucherValue}>{voucherData.camionero_rut || voucherData.rut}</Text>
+                        </View>
+                        <View style={styles.voucherRow}>
+                          <Text style={styles.voucherLabel}>EMPRESA</Text>
+                          <Text style={styles.voucherValue}>{voucherData.camionero_empresa || voucherData.empresa || 'No especificada'}</Text>
+                        </View>
+                        <View style={styles.voucherRow}>
+                          <Text style={styles.voucherLabel}>SERVICIO</Text>
+                          <Text style={[styles.voucherValue, {color: '#2C5EAD'}]}>{voucherData.tipo_servicio}</Text>
+                        </View>
+                        <View style={styles.voucherRow}>
+                          <Text style={styles.voucherLabel}>PENSIÓN</Text>
+                          <Text style={styles.voucherValue}>{voucherData.pension_nombre}</Text>
+                        </View>
+                        <View style={styles.voucherRow}>
+                          <Text style={styles.voucherLabel}>FECHA</Text>
+                          <Text style={styles.voucherValue}>{voucherData.fecha_f}</Text>
+                        </View>
+                        <View style={styles.voucherRow}>
+                          <Text style={styles.voucherLabel}>HORA</Text>
+                          <Text style={styles.voucherValue}>{voucherData.hora_f} hrs</Text>
+                        </View>
+
+                        <View style={styles.voucherSignatureArea}>
+                          <View style={styles.signatureLine} />
+                          <Text style={styles.signatureText}>Firma Transportista</Text>
+                        </View>
+                    </View>
+                )}
+                
+                <View style={styles.voucherActions}>
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#F2F2F7' }]} onPress={() => setShowVoucher(false)}>
+                        <X color="#8E8E93" size={20} />
+                        <Text style={[styles.actionBtnText, { color: '#8E8E93' }]}>Cerrar</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#EBF2FA' }]} onPress={handleShare}>
+                        <Download color="#2C5EAD" size={20} />
+                        <Text style={[styles.actionBtnText, { color: '#2C5EAD' }]}>PDF</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#2C5EAD' }]} onPress={handlePrint}>
+                        <Printer color="#fff" size={20} />
+                        <Text style={[styles.actionBtnText, { color: '#fff' }]}>Imprimir</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </View>
+      </Modal>
+
       {/* Modal logout animado */}
       <Modal visible={showLogoutModal} transparent animationType="none" onRequestClose={closeLogoutModal}>
         <Animated.View style={[styles.logoutBackdrop, { opacity: logoutBackdrop }]}>
@@ -362,6 +514,14 @@ export default function AdminHomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </Animated.View>
       </Modal>
+
+      <CustomAlert 
+        visible={alert.visible} 
+        title={alert.title} 
+        message={alert.message} 
+        type={alert.type} 
+        onClose={() => setAlert({ ...alert, visible: false })} 
+      />
     </SafeAreaView>
   );
 }
@@ -439,7 +599,7 @@ const styles = StyleSheet.create({
   quickFilterBtnActive: { backgroundColor: '#2C5EAD', borderColor: '#2C5EAD' },
   quickFilterText: { fontSize: 13, fontWeight: '600', color: '#1C1C1E' },
   quickFilterTextActive: { color: '#fff' },
-  tiendasScroll: { flexDirection: 'row', paddingVertical: 2 },
+  pensionesScroll: { flexDirection: 'row', paddingVertical: 2 },
   dateInputsRow: { flexDirection: 'row', justifyContent: 'space-between' },
   dateInput: { flex: 0.48, backgroundColor: '#fff', height: 45, borderRadius: 10, paddingHorizontal: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 14 },
   clearFiltersBtn: { marginTop: 15, alignSelf: 'flex-end' },
@@ -468,4 +628,19 @@ const styles = StyleSheet.create({
   logoutConfirmText: { color: '#fff', fontSize: 17, fontWeight: '800', marginLeft: 10 },
   logoutCancelBtn: { width: '100%', height: 56, borderRadius: 16, backgroundColor: '#F2F2F7', justifyContent: 'center', alignItems: 'center' },
   logoutCancelText: { color: '#1C1C1E', fontSize: 17, fontWeight: '700' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  voucherCard: { backgroundColor: '#fff', borderRadius: 24, width: '100%', maxWidth: 400, overflow: 'hidden', elevation: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15 },
+  voucherHeader: { backgroundColor: '#F8F9FA', padding: 20, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#E5E5EA' },
+  voucherBrand: { fontSize: 24, fontWeight: '900', color: '#2C5EAD', letterSpacing: 1 },
+  voucherTitle: { fontSize: 14, fontWeight: '700', color: '#8E8E93', textTransform: 'uppercase', marginTop: 4 },
+  voucherBody: { padding: 24 },
+  voucherRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 14, borderBottomWidth: 1, borderBottomColor: '#F2F2F7', paddingBottom: 8 },
+  voucherLabel: { fontSize: 11, fontWeight: '800', color: '#AEAEB2', width: '30%' },
+  voucherValue: { fontSize: 15, fontWeight: '700', color: '#1C1C1E', flex: 1, textAlign: 'right' },
+  voucherSignatureArea: { marginTop: 30, alignItems: 'center', paddingTop: 20 },
+  signatureLine: { width: 180, height: 1.5, backgroundColor: '#1C1C1E', marginBottom: 8 },
+  signatureText: { fontSize: 12, fontWeight: '600', color: '#8E8E93' },
+  voucherActions: { flexDirection: 'row', gap: 10, padding: 20, backgroundColor: '#F8F9FA' },
+  actionBtn: { flex: 1, height: 50, borderRadius: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  actionBtnText: { fontSize: 14, fontWeight: '800' },
 });

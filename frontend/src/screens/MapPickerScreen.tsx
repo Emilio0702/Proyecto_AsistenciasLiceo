@@ -136,7 +136,7 @@ export default function MapPickerScreen({ navigation, route }: any) {
   // ---------------------------------------------------------------------------
   const confirmarUbicacion = () => {
     if (!ubicacion) {
-      Alert.alert('Atención', 'Toca el mapa para marcar la posición de la tienda.');
+      Alert.alert('Atención', 'Toca el mapa para marcar la posición de la pensión.');
       return;
     }
     // Devuelve los datos al RegisterAdminScreen mediante route params
@@ -152,7 +152,7 @@ export default function MapPickerScreen({ navigation, route }: any) {
           <ArrowLeft color="#1C1C1E" size={26} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Ubicación de la Tienda</Text>
+          <Text style={styles.headerTitle}>Ubicación de la Pensión</Text>
           <Text style={styles.headerSub}>Toca el mapa o busca una dirección</Text>
         </View>
         {/* Botón "Mi ubicación" */}

@@ -44,7 +44,7 @@ router.post('/login', async (req, res) => {
     try {
         // Buscar usuario e incluir información de la pensión
         const result = await db.query(`
-            SELECT u.*, p.nombre as pension_nombre 
+            SELECT u.*, p.nombre as pension_nombre, p.ubicacion as pension_ubicacion 
             FROM usuarios u 
             LEFT JOIN pensiones p ON u.pension_id = p.id 
             WHERE u.email = $1
@@ -78,7 +78,8 @@ router.post('/login', async (req, res) => {
                 nombre: user.nombre,
                 rol: user.rol,
                 pension_id: user.pension_id,
-                pension_nombre: user.pension_nombre
+                pension_nombre: user.pension_nombre,
+                pension_ubicacion: user.pension_ubicacion
             }
         });
     } catch (error) {
