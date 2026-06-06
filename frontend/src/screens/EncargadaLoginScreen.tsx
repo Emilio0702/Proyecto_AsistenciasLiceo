@@ -204,7 +204,7 @@ export default function EncargadaLoginScreen({ navigation }: any) {
                 style={styles.logo}
                 resizeMode="contain"
               />
-              <Text style={styles.subtitle}>Registro de Colaciones Tienda</Text>
+              <Text style={styles.subtitle}>Registro de Colaciones Pensión</Text>
             </View>
 
             <TouchableOpacity
@@ -234,7 +234,7 @@ export default function EncargadaLoginScreen({ navigation }: any) {
                 <Mail size={18} color={emailError ? '#FF3B30' : '#8E8E93'} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.input, focusedField === 'email' && styles.inputFocused]}
-                  placeholder="Correo electrónico de la tienda"
+                  placeholder="Correo electrónico de la pensión"
                   placeholderTextColor="#AEAEB2"
                   value={email}
                   onChangeText={(v) => { setEmail(v); if (emailError) clearErrors(); }}
@@ -284,7 +284,7 @@ export default function EncargadaLoginScreen({ navigation }: any) {
               >
                 {loading
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={styles.buttonText}>Iniciar Sesión en Tienda</Text>
+                  : <Text style={styles.buttonText}>Iniciar Sesión en Pensión</Text>
                 }
               </TouchableOpacity>
             </Animated.View>

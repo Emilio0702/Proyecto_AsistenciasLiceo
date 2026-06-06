@@ -10,7 +10,7 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [tienda, setTienda] = useState('');
+  const [pension, setPension] = useState('');
 
   const [ubicacionTexto, setUbicacionTexto] = useState('');
   const [latitud, setLatitud] = useState<number | null>(null);
@@ -30,30 +30,30 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
   }, [route.params?.ubicacionData]);
 
   const registrarUsuario = async () => {
-    if (!nombre || !email || !password || (!isSuperAdmin && !tienda)) {
+    if (!nombre || !email || !password || (!isSuperAdmin && !pension)) {
       setAlert({ visible: true, title: 'Error', message: 'Todos los datos son obligatorios.', type: 'error' });
       return;
     }
 
     setLoading(true);
     try {
-      let tiendaId = null;
+      let pensionId = null;
 
       if (!isSuperAdmin) {
-        const tiendaRes = await api.post('/tiendas', { 
-          nombre: tienda, 
+        const pensionRes = await api.post('/pensiones', { 
+          nombre: pension, 
           ubicacion: ubicacionTexto || undefined,
           latitud:  latitud  ?? undefined,
           longitud: longitud ?? undefined,
         });
-        tiendaId = tiendaRes.data.id;
+        pensionId = pensionRes.data.id;
       }
 
       await api.post('/auth/register', {
         nombre,
         email,
         password,
-        tienda_id: tiendaId,
+        pension_id: pensionId,
         rol: isSuperAdmin ? 'admin' : 'encargada'
       });
 
@@ -100,8 +100,8 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
         <View style={styles.form}>
           {!isSuperAdmin && (
             <>
-              <Text style={styles.label}>Nombre de la Tienda</Text>
-              <TextInput style={styles.input} value={tienda} onChangeText={setTienda} placeholder="Ej: Tienda Central" />
+              <Text style={styles.label}>Nombre de la Pensión</Text>
+              <TextInput style={styles.input} value={pension} onChangeText={setPension} placeholder="Ej: Pensión Central" />
               
               <TouchableOpacity
                 style={[styles.mapBtn, latitud !== null && styles.mapBtnSelected]}

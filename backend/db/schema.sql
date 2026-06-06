@@ -1,5 +1,5 @@
--- Crear tabla de Tiendas
-CREATE TABLE IF NOT EXISTS tiendas (
+-- Crear tabla de Pensiones
+CREATE TABLE IF NOT EXISTS pensiones (
     id SERIAL PRIMARY KEY,
     nombre TEXT NOT NULL,
     ubicacion TEXT,                        
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
     nombre TEXT NOT NULL,
-    tienda_id INTEGER REFERENCES tiendas(id),
+    pension_id INTEGER REFERENCES pensiones(id),
     rol TEXT DEFAULT 'encargada',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS usuarios (
 CREATE TABLE IF NOT EXISTS registros_colaciones (
     id SERIAL PRIMARY KEY,
     camionero_id INTEGER REFERENCES camioneros(id) NOT NULL,
-    tienda_id INTEGER REFERENCES tiendas(id) NOT NULL,
+    pension_id INTEGER REFERENCES pensiones(id) NOT NULL,
     usuario_id INTEGER REFERENCES usuarios(id) NOT NULL,
     fecha DATE DEFAULT CURRENT_DATE NOT NULL,
     hora TIME DEFAULT CURRENT_TIME NOT NULL,

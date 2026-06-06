@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, Image, StatusBar, Platform } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Image, StatusBar, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { User, ShieldCheck } from 'lucide-react-native';
 
 export default function RoleSelectionScreen({ navigation }: any) {

@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'serviterra_secret_key_2024';
 
 // Registro de usuario (Solo accesible para Administradores)
 router.post('/register', verifyToken, isAdmin, async (req, res) => {
-    const { email, password, nombre, tienda_id, rol } = req.body;
+    const { email, password, nombre, pension_id, rol } = req.body;
 
     try {
         // Verificar si el usuario ya existe
@@ -24,8 +24,8 @@ router.post('/register', verifyToken, isAdmin, async (req, res) => {
 
         // Insertar usuario
         const result = await db.query(
-            'INSERT INTO usuarios (email, password_hash, nombre, tienda_id, rol) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, nombre, rol, tienda_id',
-            [email, passwordHash, nombre, tienda_id, rol || 'encargada']
+            'INSERT INTO usuarios (email, password_hash, nombre, pension_id, rol) VALUES ($1, $2, $3, $4, $5) RETURNING id, email, nombre, rol, pension_id',
+            [email, passwordHash, nombre, pension_id, rol || 'encargada']
         );
 
         res.status(201).json({
@@ -42,11 +42,11 @@ router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        // Buscar usuario e incluir información de la tienda
+        // Buscar usuario e incluir información de la pensión
         const result = await db.query(`
-            SELECT u.*, t.nombre as tienda_nombre 
+            SELECT u.*, p.nombre as pension_nombre 
             FROM usuarios u 
-            LEFT JOIN tiendas t ON u.tienda_id = t.id 
+            LEFT JOIN pensiones p ON u.pension_id = p.id 
             WHERE u.email = $1
         `, [email]);
 
@@ -65,7 +65,7 @@ router.post('/login', async (req, res) => {
 
         // Generar token
         const token = jwt.sign(
-            { id: user.id, email: user.email, rol: user.rol, tienda_id: user.tienda_id },
+            { id: user.id, email: user.email, rol: user.rol, pension_id: user.pension_id },
             JWT_SECRET,
             { expiresIn: '24h' }
         );
@@ -77,8 +77,8 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 nombre: user.nombre,
                 rol: user.rol,
-                tienda_id: user.tienda_id,
-                tienda_nombre: user.tienda_nombre
+                pension_id: user.pension_id,
+                pension_nombre: user.pension_nombre
             }
         });
     } catch (error) {

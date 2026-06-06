@@ -7,8 +7,8 @@ interface User {
   email: string;
   nombre: string;
   rol: string;
-  tienda_id: number | null;
-  tienda_nombre: string | null;
+  pension_id: number | null;
+  pension_nombre: string | null;
 }
 
 interface AuthContextData {

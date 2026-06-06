@@ -12,4 +12,15 @@ const api = axios.create({
   timeout: 10000, // Aumentamos el timeout a 10s para redes Wi-Fi lentas
 });
 
+// Interceptor para debugging de errores de red
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.message === 'Network Error') {
+      console.error('[API] Error de Red. Verifica que el backend esté corriendo en:', API_URL);
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

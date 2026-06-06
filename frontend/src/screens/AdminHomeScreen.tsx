@@ -44,22 +44,22 @@ export default function AdminHomeScreen({ navigation }: any) {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
-  const [tiendas, setTiendas] = useState<any[]>([]);
-  const [selectedTienda, setSelectedTienda] = useState('');
+  const [pensiones, setPensiones] = useState<any[]>([]);
+  const [selectedPension, setSelectedPension] = useState('');
   const [activeDateFilter, setActiveDateFilter] = useState('');
   
   const PER_PAGE = 10;
 
   useEffect(() => {
-    fetchTiendas();
+    fetchPensiones();
   }, []);
 
-  const fetchTiendas = async () => {
+  const fetchPensiones = async () => {
     try {
-      const response = await api.get('/tiendas');
-      setTiendas(response.data);
+      const response = await api.get('/pensiones');
+      setPensiones(response.data);
     } catch (error) {
-      console.error('Error fetching tiendas:', error);
+      console.error('Error fetching pensiones:', error);
     }
   };
 
@@ -69,7 +69,7 @@ export default function AdminHomeScreen({ navigation }: any) {
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchText, fechaInicio, fechaFin, selectedTienda]);
+  }, [searchText, fechaInicio, fechaFin, selectedPension]);
 
   const setDateFilter = (filterType: string) => {
     setActiveDateFilter(filterType);
@@ -98,8 +98,8 @@ export default function AdminHomeScreen({ navigation }: any) {
   const fetchRegistros = async (pageNumber: number) => {
     if (pageNumber === 0) setLoading(true);
     try {
-      const tiendaQuery = selectedTienda ? `&tienda_id=${selectedTienda}` : '';
-      const response = await api.get(`/colaciones?limit=${PER_PAGE}&offset=${pageNumber * PER_PAGE}&search=${searchText}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}${tiendaQuery}`);
+      const pensionQuery = selectedPension ? `&pension_id=${selectedPension}` : '';
+      const response = await api.get(`/colaciones?limit=${PER_PAGE}&offset=${pageNumber * PER_PAGE}&search=${searchText}&fecha_inicio=${fechaInicio}&fecha_fin=${fechaFin}${pensionQuery}`);
       const newData = response.data.data || [];
       if (pageNumber === 0) setRegistros(newData);
       else setRegistros([...(registros || []), ...newData]);
@@ -205,7 +205,7 @@ export default function AdminHomeScreen({ navigation }: any) {
             <Search size={18} color="#8E8E93" />
             <TextInput 
               style={styles.searchInput} 
-              placeholder="Buscar por rut, patente, camionero o tienda..." 
+              placeholder="Buscar por rut, patente, camionero o pensión..." 
               value={searchText} 
               onChangeText={setSearchText} 
               selectionColor="#2C5EAD"
@@ -248,21 +248,21 @@ export default function AdminHomeScreen({ navigation }: any) {
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.filterLabel, { marginTop: 15 }]}>Filtrar por Tienda</Text>
+              <Text style={[styles.filterLabel, { marginTop: 15 }]}>Filtrar por Pensión</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tiendasScroll} contentContainerStyle={{ gap: 10 }}>
                 <TouchableOpacity 
-                  style={[styles.quickFilterBtn, selectedTienda === '' && styles.quickFilterBtnActive]} 
-                  onPress={() => setSelectedTienda('')}
+                  style={[styles.quickFilterBtn, selectedPension === '' && styles.quickFilterBtnActive]} 
+                  onPress={() => setSelectedPension('')}
                 >
-                  <Text style={[styles.quickFilterText, selectedTienda === '' && styles.quickFilterTextActive]}>Todas</Text>
+                  <Text style={[styles.quickFilterText, selectedPension === '' && styles.quickFilterTextActive]}>Todas</Text>
                 </TouchableOpacity>
-                {tiendas.map((t: any) => (
+                {pensiones.map((p: any) => (
                   <TouchableOpacity 
-                    key={t.id.toString()}
-                    style={[styles.quickFilterBtn, selectedTienda === t.id.toString() && styles.quickFilterBtnActive]} 
-                    onPress={() => setSelectedTienda(t.id.toString())}
+                    key={p.id.toString()}
+                    style={[styles.quickFilterBtn, selectedPension === p.id.toString() && styles.quickFilterBtnActive]} 
+                    onPress={() => setSelectedPension(p.id.toString())}
                   >
-                    <Text style={[styles.quickFilterText, selectedTienda === t.id.toString() && styles.quickFilterTextActive]}>{t.nombre}</Text>
+                    <Text style={[styles.quickFilterText, selectedPension === p.id.toString() && styles.quickFilterTextActive]}>{p.nombre}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -286,8 +286,8 @@ export default function AdminHomeScreen({ navigation }: any) {
                   cursorColor="#2C5EAD"
                 />
               </View>
-              {(fechaInicio !== '' || fechaFin !== '' || selectedTienda !== '' || activeDateFilter !== '') && (
-                <TouchableOpacity style={styles.clearFiltersBtn} onPress={() => { setDateFilter('todos'); setSelectedTienda(''); }}>
+              {(fechaInicio !== '' || fechaFin !== '' || selectedPension !== '' || activeDateFilter !== '') && (
+                <TouchableOpacity style={styles.clearFiltersBtn} onPress={() => { setDateFilter('todos'); setSelectedPension(''); }}>
                   <Text style={styles.clearFiltersText}>Limpiar todos los filtros</Text>
                 </TouchableOpacity>
               )}
@@ -311,7 +311,7 @@ export default function AdminHomeScreen({ navigation }: any) {
                 <View style={styles.recordFooter}>
                   <View style={styles.footerItem}>
                     <Store size={14} color="#8E8E93" />
-                    <Text style={styles.footerText} numberOfLines={2}>{item.tienda_nombre}</Text>
+                    <Text style={styles.footerText} numberOfLines={2}>{item.pension_nombre}</Text>
                   </View>
                   <View style={styles.footerItem}>
                     <Clock size={14} color="#8E8E93" />

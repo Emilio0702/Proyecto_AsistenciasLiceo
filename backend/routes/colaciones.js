@@ -8,11 +8,11 @@ const { formatInTimeZone } = require('date-fns-tz');
 
 // Registrar una nueva colación
 router.post('/', verifyToken, async (req, res) => {
-    let { camionero_id, tienda_id, usuario_id, tipo_servicio } = req.body;
+    let { camionero_id, pension_id, usuario_id, tipo_servicio } = req.body;
     
-    // Seguridad: Si es encargada, forzar su tienda_id y su usuario_id
+    // Seguridad: Si es encargada, forzar su pension_id y su usuario_id
     if (req.user.rol === 'encargada') {
-        tienda_id = req.user.tienda_id;
+        pension_id = req.user.pension_id;
         usuario_id = req.user.id;
     }
 
@@ -24,12 +24,16 @@ router.post('/', verifyToken, async (req, res) => {
 
     try {
         const result = await db.query(
-            'INSERT INTO registros_colaciones (camionero_id, tienda_id, usuario_id, fecha, hora, tipo_servicio) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-            [camionero_id, tienda_id, usuario_id, fechaChile, horaChile, tipo_servicio]
+            `INSERT INTO registros_colaciones (camionero_id, pension_id, usuario_id, fecha, hora, tipo_servicio) 
+             VALUES ($1, $2, $3, $4, $5, $6) 
+             RETURNING *, 
+             TO_CHAR(fecha, 'DD/MM/YYYY') as fecha_f,
+             TO_CHAR(hora, 'HH12:MI AM') as hora_f`,
+            [camionero_id, pension_id, usuario_id, fechaChile, horaChile, tipo_servicio]
         );
         res.status(201).json({
             message: 'Colación registrada exitosamente',
-            registro: result.rows[0]
+            registro: { ...result.rows[0], empresa: req.body.empresa }
         });
     } catch (error) {
         if (error.code === '23505') { // Error de duplicado (Unique violation)
@@ -46,36 +50,36 @@ const ExcelJS = require('exceljs');
 // Obtener historial de colaciones con paginación opcional y filtros
 router.get('/', verifyToken, async (req, res) => {
     try {
-        let { limit, offset, tienda_id, search, fecha_inicio, fecha_fin } = req.query;
+        let { limit, offset, pension_id, search, fecha_inicio, fecha_fin } = req.query;
         
-        // Seguridad: Si es encargada, solo puede ver su tienda
+        // Seguridad: Si es encargada, solo puede ver su pensión
         if (req.user.rol === 'encargada') {
-            tienda_id = req.user.tienda_id;
+            pension_id = req.user.pension_id;
         }
 
         let queryStr = `
-            SELECT r.*, c.nombre as camionero_nombre, c.rut as camionero_rut, c.patente as camionero_patente, t.nombre as tienda_nombre, t.ubicacion as tienda_ubicacion,
+            SELECT r.*, c.nombre as camionero_nombre, c.rut as camionero_rut, c.patente as camionero_patente, c.empresa as camionero_empresa, p.nombre as pension_nombre, p.ubicacion as pension_ubicacion,
                    TO_CHAR(r.fecha, 'DD-MM-YYYY') as fecha_registro,
                    TO_CHAR(r.hora, 'HH24:MI') as hora_registro,
                    r.tipo_servicio
             FROM registros_colaciones r
             JOIN camioneros c ON r.camionero_id = c.id
-            JOIN tiendas t ON r.tienda_id = t.id
+            JOIN pensiones p ON r.pension_id = p.id
             WHERE 1=1
         `;
         let countQueryStr = `
             SELECT COUNT(*) FROM registros_colaciones r
             JOIN camioneros c ON r.camionero_id = c.id
-            JOIN tiendas t ON r.tienda_id = t.id
+            JOIN pensiones p ON r.pension_id = p.id
             WHERE 1=1
         `;
         let params = [];
         let paramsCount = [];
 
-        if (tienda_id) {
-            params.push(tienda_id);
-            paramsCount.push(tienda_id);
-            const condition = ` AND r.tienda_id = $${params.length}`;
+        if (pension_id) {
+            params.push(pension_id);
+            paramsCount.push(pension_id);
+            const condition = ` AND r.pension_id = $${params.length}`;
             queryStr += condition;
             countQueryStr += condition;
         }
@@ -84,23 +88,24 @@ router.get('/', verifyToken, async (req, res) => {
             const searchParam = `%${search}%`;
             params.push(searchParam);
             paramsCount.push(searchParam);
-            const condition = ` AND (c.nombre ILIKE $${params.length} OR t.nombre ILIKE $${params.length} OR c.rut ILIKE $${params.length} OR c.patente ILIKE $${params.length})`;
+            const condition = ` AND (c.nombre ILIKE $${params.length} OR p.nombre ILIKE $${params.length} OR c.rut ILIKE $${params.length} OR c.patente ILIKE $${params.length})`;
             queryStr += condition;
             countQueryStr += condition;
         }
 
         if (fecha_inicio) {
-            params.push(fecha_inicio);
-            paramsCount.push(fecha_inicio);
-            const condition = ` AND r.fecha >= $${params.length}`;
+            // Asegurar que la fecha esté en formato YYYY-MM-DD
+            params.push(fecha_inicio.trim());
+            paramsCount.push(fecha_inicio.trim());
+            const condition = ` AND r.fecha >= $${params.length}::date`;
             queryStr += condition;
             countQueryStr += condition;
         }
 
         if (fecha_fin) {
-            params.push(fecha_fin);
-            paramsCount.push(fecha_fin);
-            const condition = ` AND r.fecha <= $${params.length}`;
+            params.push(fecha_fin.trim());
+            paramsCount.push(fecha_fin.trim());
+            const condition = ` AND r.fecha <= $${params.length}::date`;
             queryStr += condition;
             countQueryStr += condition;
         }
@@ -131,23 +136,23 @@ router.get('/', verifyToken, async (req, res) => {
 // Exportar reporte Excel
 router.get('/reporte/excel', verifyToken, async (req, res) => {
     try {
-        let tiendaFilter = '';
+        let pensionFilter = '';
         let params = [];
 
-        // Seguridad: Si es encargada, filtrar solo su tienda
+        // Seguridad: Si es encargada, filtrar solo su pensión
         if (req.user.rol === 'encargada') {
-            tiendaFilter = 'WHERE r.tienda_id = $1';
-            params.push(req.user.tienda_id);
+            pensionFilter = 'WHERE r.pension_id = $1';
+            params.push(req.user.pension_id);
         }
 
         const result = await db.query(`
-            SELECT r.id, c.nombre as camionero_nombre, c.rut, t.nombre as tienda_nombre, 
+            SELECT r.id, c.nombre as camionero_nombre, c.rut, p.nombre as pension_nombre, 
                    u.nombre as usuario_nombre, r.fecha, r.hora
             FROM registros_colaciones r
             JOIN camioneros c ON r.camionero_id = c.id
-            JOIN tiendas t ON r.tienda_id = t.id
+            JOIN pensiones p ON r.pension_id = p.id
             JOIN usuarios u ON r.usuario_id = u.id
-            ${tiendaFilter}
+            ${pensionFilter}
             ORDER BY r.fecha DESC, r.hora DESC
         `, params);
 
@@ -158,7 +163,7 @@ router.get('/reporte/excel', verifyToken, async (req, res) => {
             { header: 'ID', key: 'id', width: 10 },
             { header: 'Camionero', key: 'camionero_nombre', width: 30 },
             { header: 'RUT', key: 'rut', width: 15 },
-            { header: 'Tienda', key: 'tienda_nombre', width: 30 },
+            { header: 'Pensión', key: 'pension_nombre', width: 30 },
             { header: 'Encargada', key: 'usuario_nombre', width: 30 },
             { header: 'Fecha', key: 'fecha', width: 15 },
             { header: 'Hora', key: 'hora', width: 15 },

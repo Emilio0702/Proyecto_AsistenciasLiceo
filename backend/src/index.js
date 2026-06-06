@@ -6,7 +6,7 @@ const db = require('../db/db');
 const camionerosRoutes = require('../routes/camioneros');
 const colacionesRoutes = require('../routes/colaciones');
 const authRoutes = require('../routes/auth');
-const tiendasRoutes = require('../routes/tiendas');
+const pensionesRoutes = require('../routes/pensiones');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -18,7 +18,7 @@ app.use(express.json());
 app.use('/api/camioneros', camionerosRoutes);
 app.use('/api/colaciones', colacionesRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/tiendas', tiendasRoutes);
+app.use('/api/pensiones', pensionesRoutes);
 
 app.get('/', (req, res) => {
   res.send('Backend del Sistema de Registro de Colaciones funcionando!');
