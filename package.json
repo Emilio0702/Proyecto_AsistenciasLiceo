@@ -7,9 +7,7 @@
     "docker-up": "docker-compose up -d",
     "docker-down": "docker-compose down",
     "backend": "cd backend && npm run dev",
-    "frontend": "cd frontend && npm start",
-    "start": "concurrently --kill-others \"npm run backend\" \"npm run frontend\"",
-    "start-full": "concurrently --kill-others \"npm run docker-up\" \"npm run backend\" \"npm run frontend\""
+    "frontend": "cd frontend && npm start"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
