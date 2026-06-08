@@ -7,14 +7,14 @@ RUN apk add --no-cache procps
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de dependencias
-COPY package*.json ./
+# Copiar archivos de dependencias desde la carpeta backend
+COPY backend/package*.json ./
 
 # Instalar dependencias
 RUN npm install
 
-# Copiar el resto del código
-COPY . .
+# Copiar el resto del código desde la carpeta backend
+COPY backend/ .
 
 # Exponer el puerto que usa la app
 EXPOSE 3000
