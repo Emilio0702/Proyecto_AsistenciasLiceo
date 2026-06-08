@@ -10,7 +10,9 @@ const pool = new Pool({
   database: !connectionString ? process.env.DB_DATABASE : undefined,
   password: !connectionString ? process.env.DB_PASSWORD : undefined,
   port: !connectionString ? process.env.DB_PORT : undefined,
-  ssl: process.env.DB_SSL === 'true' || connectionString ? { rejectUnauthorized: false } : false
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 pool.on('error', (err) => {
