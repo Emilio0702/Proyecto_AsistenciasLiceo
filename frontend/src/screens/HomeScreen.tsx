@@ -27,7 +27,7 @@ export default function HomeScreen({ navigation }: any) {
   // Estados principales
   const [rut, setRut] = useState('');
   const [loading, setLoading] = useState(false);
-  const [camionero, setCamionero] = useState<any>(null);
+  const [trabajador, setTrabajador] = useState<any>(null);
   const [isScannerVisible, setIsScannerVisible] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -118,7 +118,7 @@ export default function HomeScreen({ navigation }: any) {
     const match = data.match(/(\d{7,8})-([\dkK])/);
     const rutFormateado = formatRut(match ? match[0] : data);
     setRut(rutFormateado);
-    buscarCamionero(rutFormateado);
+    buscarTrabajador(rutFormateado);
   };
 
   const formatRutInput = (text: string) => {
@@ -126,7 +126,7 @@ export default function HomeScreen({ navigation }: any) {
     setRut(sanitized);
   };
 
-  const buscarCamionero = async (rutABuscar?: string) => {
+  const buscarTrabajador = async (rutABuscar?: string) => {
     const rutFinal = cleanRut(rutABuscar || rut);
     if (!rutFinal || rutFinal.length < 8) return;
 
@@ -135,21 +135,21 @@ export default function HomeScreen({ navigation }: any) {
       return;
     }
 
-    setLoading(true); setCamionero(null); Keyboard.dismiss();
+    setLoading(true); setTrabajador(null); Keyboard.dismiss();
     try {
-      const response = await api.get(`/camioneros/${rutFinal}`);
-      setCamionero(response.data); setRut(formatRut(response.data.rut));
+      const response = await api.get(`/trabajadores/${rutFinal}`);
+      setTrabajador(response.data); setRut(formatRut(response.data.rut));
     } catch (error: any) {
-      setAlert({ visible: true, title: 'Atención', message: 'Camionero no encontrado en la base de datos.', type: 'error' });
+      setAlert({ visible: true, title: 'Atención', message: 'Trabajador no encontrado en la base de datos.', type: 'error' });
     } finally { setLoading(false); }
   };
 
   const registrarColacion = async () => {
-    if (!camionero || !user) return;
+    if (!trabajador || !user) return;
     setLoading(true);
     try {
       const response = await api.post('/colaciones', { 
-        camionero_id: camionero.id, 
+        trabajador_id: trabajador.id, 
         pension_id: user.pension_id, 
         usuario_id: user.id,
         tipo_servicio: tipoServicio 
@@ -157,15 +157,15 @@ export default function HomeScreen({ navigation }: any) {
       
       setVoucherData({
         ...response.data.registro,
-        camionero_nombre: camionero.nombre,
-        camionero_rut: camionero.rut,
-        empresa: camionero.empresa,
+        trabajador_nombre: trabajador.nombre,
+        trabajador_rut: trabajador.rut,
+        empresa: trabajador.empresa,
         pension_nombre: user.pension_nombre,
         tipo_servicio: tipoServicio
       });
       setShowVoucher(true);
 
-      setCamionero(null); setRut('');
+      setTrabajador(null); setRut('');
       fetchHistorial(0);
     } catch (error: any) {
       setAlert({ visible: true, title: 'Error', message: error.response?.data?.message || 'No se pudo completar el registro.', type: 'error' });
@@ -202,9 +202,9 @@ export default function HomeScreen({ navigation }: any) {
             <h1>Voucher de Servicio</h1>
           </div>
           <div class="details">
-            <div class="item"><strong>Camionero</strong> <span>${voucherData.camionero_nombre}</span></div>
-            <div class="item"><strong>RUT</strong> <span>${voucherData.camionero_rut || voucherData.rut}</span></div>
-            <div class="item"><strong>Empresa</strong> <span>${voucherData.empresa || voucherData.camionero_empresa || 'No especificada'}</span></div>
+            <div class="item"><strong>Trabajador</strong> <span>${voucherData.trabajador_nombre}</span></div>
+            <div class="item"><strong>RUT</strong> <span>${voucherData.trabajador_rut || voucherData.rut}</span></div>
+            <div class="item"><strong>Empresa</strong> <span>${voucherData.empresa || voucherData.trabajador_empresa || 'No especificada'}</span></div>
             <div class="item"><strong>Servicio</strong> <span>${voucherData.tipo_servicio}</span></div>
             <div class="item"><strong>Pensión</strong> <span>${voucherData.pension_nombre}</span></div>
             <div class="item"><strong>Fecha</strong> <span>${voucherData.fecha_f || voucherData.fecha_registro || voucherData.fecha}</span></div>
@@ -213,7 +213,7 @@ export default function HomeScreen({ navigation }: any) {
           <div class="signature-section">
             <div class="signature-line"></div>
             <p class="signature-text">Firma del Transportista</p>
-            <p class="signature-rut">RUT: ${voucherData.camionero_rut || voucherData.rut}</p>
+            <p class="signature-rut">RUT: ${voucherData.trabajador_rut || voucherData.rut}</p>
           </div>
           <div class="footer">
             <p>Este comprobante certifica la recepción del servicio mencionado.<br>Copia para control administrativo ServiTerra.</p>
@@ -288,23 +288,23 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
         
-        <TouchableOpacity style={styles.btnSearch} onPress={() => buscarCamionero()} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Buscar Camionero</Text>}
+        <TouchableOpacity style={styles.btnSearch} onPress={() => buscarTrabajador()} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Buscar Trabajador</Text>}
         </TouchableOpacity>
 
-        {camionero && (
+        {trabajador && (
           <View style={styles.card}>
             <View style={styles.userIconCircle}>
               <User size={40} color="#2C5EAD" />
             </View>
-            <Text style={styles.name}>{camionero.nombre}</Text>
+            <Text style={styles.name}>{trabajador.nombre}</Text>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>RUT:</Text>
-              <Text style={styles.infoValue}>{camionero.rut}</Text>
+              <Text style={styles.infoValue}>{trabajador.rut}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Patente:</Text>
-              <Text style={styles.infoValue}>{camionero.patente}</Text>
+              <Text style={styles.infoValue}>{trabajador.patente}</Text>
             </View>
             
             <Text style={styles.label}>Seleccionar Servicio:</Text>
@@ -332,7 +332,7 @@ export default function HomeScreen({ navigation }: any) {
             renderItem={({ item }: any) => (
               <TouchableOpacity style={styles.recordCard} onPress={() => handleOpenVoucherFromHistory(item)} activeOpacity={0.7}>
                 <View style={styles.recordHeader}>
-                  <Text style={styles.camioneroName}>{item.camionero_nombre}</Text>
+                  <Text style={styles.trabajadorName}>{item.trabajador_nombre}</Text>
                   <Text style={styles.timeText}>{item.tipo_servicio}</Text>
                 </View>
                 <View style={styles.locationRow}>
@@ -383,16 +383,16 @@ export default function HomeScreen({ navigation }: any) {
                 {voucherData && (
                     <View style={styles.voucherBody}>
                         <View style={styles.voucherRow}>
-                          <Text style={styles.voucherLabel}>CAMIONERO</Text>
-                          <Text style={styles.voucherValue}>{voucherData.camionero_nombre}</Text>
+                          <Text style={styles.voucherLabel}>TRABAJADOR</Text>
+                          <Text style={styles.voucherValue}>{voucherData.trabajador_nombre}</Text>
                         </View>
                         <View style={styles.voucherRow}>
                           <Text style={styles.voucherLabel}>RUT</Text>
-                          <Text style={styles.voucherValue}>{voucherData.camionero_rut || voucherData.rut}</Text>
+                          <Text style={styles.voucherValue}>{voucherData.trabajador_rut || voucherData.rut}</Text>
                         </View>
                         <View style={styles.voucherRow}>
                           <Text style={styles.voucherLabel}>EMPRESA</Text>
-                          <Text style={styles.voucherValue}>{voucherData.empresa || voucherData.camionero_empresa || 'No especificada'}</Text>
+                          <Text style={styles.voucherValue}>{voucherData.empresa || voucherData.trabajador_empresa || 'No especificada'}</Text>
                         </View>
                         <View style={styles.voucherRow}>
                           <Text style={styles.voucherLabel}>SERVICIO</Text>
@@ -462,8 +462,20 @@ export default function HomeScreen({ navigation }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 20, height: 70, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#D1D1D6', backgroundColor: '#FFFFFF', elevation: 3 },
-  headerLogoSection: { height: '100%', justifyContent: 'center', paddingTop: 5 },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 20, 
+    minHeight: 90, 
+    paddingTop: 10,
+    paddingBottom: 10,
+    alignItems: 'center', 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#D1D1D6', 
+    backgroundColor: '#FFFFFF', 
+    elevation: 3 
+  },
+  headerLogoSection: { flex: 1, justifyContent: 'center', marginRight: 10 },
   logo: { width: 150, height: 40 },
   local: { color: '#2C5EAD', fontWeight: '800', fontSize: 13 },
   locationLabel: { fontSize: 11, color: '#8E8E93', fontWeight: '600', flex: 1 },
@@ -486,7 +498,7 @@ const styles = StyleSheet.create({
   btnConfirmText: { color: '#fff', fontWeight: '800', fontSize: 18, marginLeft: 12 },
   recordCard: { backgroundColor: '#fff', padding: 15, borderRadius: 12, marginBottom: 10, borderWidth: 1, borderColor: '#F2F2F7' },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  camioneroName: { fontSize: 16, fontWeight: '700', color: '#1C1C1E' },
+  trabajadorName: { fontSize: 16, fontWeight: '700', color: '#1C1C1E' },
   timeText: { fontSize: 14, color: '#2C5EAD', fontWeight: '700' },
   locationRow: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 6 },
   locationText: { flex: 1, fontSize: 13, color: '#8E8E93', fontWeight: '600' },

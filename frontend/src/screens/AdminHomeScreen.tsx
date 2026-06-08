@@ -167,9 +167,9 @@ export default function AdminHomeScreen({ navigation }: any) {
             <h1>Voucher de Servicio</h1>
           </div>
           <div class="details">
-            <div class="item"><strong>Camionero</strong> <span>${voucherData.camionero_nombre}</span></div>
-            <div class="item"><strong>RUT</strong> <span>${voucherData.camionero_rut || voucherData.rut}</span></div>
-            <div class="item"><strong>Empresa</strong> <span>${voucherData.camionero_empresa || voucherData.empresa || 'No especificada'}</span></div>
+            <div class="item"><strong>Trabajador</strong> <span>${voucherData.trabajador_nombre}</span></div>
+            <div class="item"><strong>RUT</strong> <span>${voucherData.trabajador_rut}</span></div>
+            <div class="item"><strong>Empresa</strong> <span>${voucherData.trabajador_empresa || 'No especificada'}</span></div>
             <div class="item"><strong>Servicio</strong> <span>${voucherData.tipo_servicio}</span></div>
             <div class="item"><strong>Pensión</strong> <span>${voucherData.pension_nombre}</span></div>
             <div class="item"><strong>Fecha</strong> <span>${voucherData.fecha_f}</span></div>
@@ -177,8 +177,8 @@ export default function AdminHomeScreen({ navigation }: any) {
           </div>
           <div class="signature-section">
             <div class="signature-line"></div>
-            <p class="signature-text">Firma del Transportista</p>
-            <p class="signature-rut">RUT: ${voucherData.camionero_rut || voucherData.rut}</p>
+            <p class="signature-text">Firma del Trabajador</p>
+            <p class="signature-rut">RUT: ${voucherData.trabajador_rut}</p>
           </div>
           <div class="footer">
             <p>Este comprobante certifica la recepción del servicio mencionado.<br>Copia para control administrativo ServiTerra.</p>
@@ -235,14 +235,14 @@ export default function AdminHomeScreen({ navigation }: any) {
           <View style={styles.managementGrid}>
             <TouchableOpacity 
               style={styles.manageCard} 
-              onPress={() => navigation.navigate('RegisterCamionero')}
+              onPress={() => navigation.navigate('RegisterTrabajador')}
               activeOpacity={0.7}
             >
               <View style={[styles.miniIcon, {backgroundColor: '#EBF2FA'}]}>
                 <Truck size={24} color="#2C5EAD" />
               </View>
               <View style={styles.manageTextContainer}>
-                <Text style={styles.manageText}>Nuevo Camionero</Text>
+                <Text style={styles.manageText}>Nuevo Trabajador</Text>
                 <Text style={styles.manageSubtext}>Registrar conductor y patente</Text>
               </View>
               <ChevronRight size={20} color="#C7C7CC" />
@@ -282,8 +282,7 @@ export default function AdminHomeScreen({ navigation }: any) {
           <View style={styles.historyHeaderRow}>
             <Text style={styles.historyTitle}>Servicios entregados recientemente</Text>
             <TouchableOpacity style={styles.filterToggleBtn} onPress={() => setIsFilterExpanded(!isFilterExpanded)}>
-              <Filter size={18} color={isFilterExpanded ? "#2C5EAD" : "#8E8E93"} />
-              <Text style={[styles.filterToggleText, isFilterExpanded && { color: "#2C5EAD", fontWeight: '700' }]}>Filtros</Text>
+              <Filter size={20} color={isFilterExpanded ? "#2C5EAD" : "#8E8E93"} />
             </TouchableOpacity>
           </View>
           
@@ -291,7 +290,7 @@ export default function AdminHomeScreen({ navigation }: any) {
             <Search size={18} color="#8E8E93" />
             <TextInput 
               style={styles.searchInput} 
-              placeholder="Buscar por rut, patente, camionero o pensión..." 
+              placeholder="Buscar por rut, patente o trabajador..." 
               value={searchText} 
               onChangeText={setSearchText} 
               selectionColor="#2C5EAD"
@@ -388,7 +387,7 @@ export default function AdminHomeScreen({ navigation }: any) {
                 <View style={styles.recordHeader}>
                   <View style={styles.userRow}>
                     <View style={styles.avatarMini}><User size={14} color="#2C5EAD" /></View>
-                    <Text style={styles.camioneroName}>{item.camionero_nombre}</Text>
+                    <Text style={styles.trabajadorName}>{item.trabajador_nombre}</Text>
                   </View>
                   <View style={[styles.statusTag, {backgroundColor: '#EBF2FA'}]}>
                     <Text style={[styles.statusText, {color: '#2C5EAD'}]}>{item.tipo_servicio}</Text>
@@ -437,16 +436,16 @@ export default function AdminHomeScreen({ navigation }: any) {
                 {voucherData && (
                     <View style={styles.voucherBody}>
                         <View style={styles.voucherRow}>
-                          <Text style={styles.voucherLabel}>CAMIONERO</Text>
-                          <Text style={styles.voucherValue}>{voucherData.camionero_nombre}</Text>
+                          <Text style={styles.voucherLabel}>TRABAJADOR</Text>
+                          <Text style={styles.voucherValue}>{voucherData.trabajador_nombre}</Text>
                         </View>
                         <View style={styles.voucherRow}>
                           <Text style={styles.voucherLabel}>RUT</Text>
-                          <Text style={styles.voucherValue}>{voucherData.camionero_rut || voucherData.rut}</Text>
+                          <Text style={styles.voucherValue}>{voucherData.trabajador_rut}</Text>
                         </View>
                         <View style={styles.voucherRow}>
                           <Text style={styles.voucherLabel}>EMPRESA</Text>
-                          <Text style={styles.voucherValue}>{voucherData.camionero_empresa || voucherData.empresa || 'No especificada'}</Text>
+                          <Text style={styles.voucherValue}>{voucherData.trabajador_empresa || 'No especificada'}</Text>
                         </View>
                         <View style={styles.voucherRow}>
                           <Text style={styles.voucherLabel}>SERVICIO</Text>
@@ -467,7 +466,7 @@ export default function AdminHomeScreen({ navigation }: any) {
 
                         <View style={styles.voucherSignatureArea}>
                           <View style={styles.signatureLine} />
-                          <Text style={styles.signatureText}>Firma Transportista</Text>
+                          <Text style={styles.signatureText}>Firma del Trabajador</Text>
                         </View>
                     </View>
                 )}
@@ -529,6 +528,7 @@ export default function AdminHomeScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   header: { 
+    paddingTop: 10,
     paddingHorizontal: 24, 
     paddingBottom: 20, 
     borderBottomWidth: 1, 
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   userRow: { flexDirection: 'row', alignItems: 'center' },
   avatarMini: { width: 28, height: 28, borderRadius: 10, backgroundColor: '#EBF2FA', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  camioneroName: { fontWeight: '700', fontSize: 16, color: '#1C1C1E' },
+  trabajadorName: { fontWeight: '700', fontSize: 16, color: '#1C1C1E' },
   statusTag: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
   statusText: { fontSize: 10, fontWeight: '900' },
   recordFooter: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: '#F2F2F7', paddingTop: 12, gap: 12 },

@@ -4,28 +4,28 @@ const { verifyToken } = require('../src/middleware/auth');
 
 const router = express.Router();
 
-// Obtener todos los camioneros (Protegido)
+// Obtener todos los trabajadores (Protegido)
 router.get('/', verifyToken, async (req, res) => {
     try {
-        const result = await db.query('SELECT * FROM camioneros ORDER BY nombre ASC');
+        const result = await db.query('SELECT * FROM trabajadores ORDER BY nombre ASC');
         res.json(result.rows);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Buscar camionero por RUT (Protegido)
+// Buscar trabajador por RUT (Protegido)
 router.get('/:rut', verifyToken, async (req, res) => {
     try {
         const normalizedRut = String(req.params.rut || '').replace(/[^0-9kK]/g, '').toUpperCase().trim();
         const result = await db.query(
-            `SELECT * FROM camioneros
+            `SELECT * FROM trabajadores
              WHERE REGEXP_REPLACE(UPPER(TRIM(rut)), '[^0-9K]', '', 'g') = $1
              LIMIT 1`,
             [normalizedRut]
         );
         if (result.rows.length === 0) {
-            return res.status(404).json({ message: 'Camionero no encontrado' });
+            return res.status(404).json({ message: 'Trabajador no encontrado' });
         }
         res.json(result.rows[0]);
     } catch (error) {
@@ -33,12 +33,12 @@ router.get('/:rut', verifyToken, async (req, res) => {
     }
 });
 
-// Registrar nuevo camionero (Protegido)
+// Registrar nuevo trabajador (Protegido)
 router.post('/', verifyToken, async (req, res) => {
     const { rut, nombre, patente, telefono, empresa } = req.body;
     try {
         const result = await db.query(
-            'INSERT INTO camioneros (rut, nombre, patente, telefono, empresa) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+            'INSERT INTO trabajadores (rut, nombre, patente, telefono, empresa) VALUES ($1, $2, $3, $4, $5) RETURNING *',
             [rut, nombre, patente, telefono, empresa]
         );
         res.status(201).json(result.rows[0]);

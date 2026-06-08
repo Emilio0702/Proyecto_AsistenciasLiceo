@@ -1,5 +1,5 @@
--- Modificar tabla de Camioneros para incluir empresa
-ALTER TABLE camioneros ADD COLUMN IF NOT EXISTS empresa TEXT;
+-- Modificar tabla de Trabajadores para incluir empresa
+ALTER TABLE trabajadores ADD COLUMN IF NOT EXISTS empresa TEXT;
 
 -- Modificar tabla de Registros de Colaciones para incluir tipo de servicio
 ALTER TABLE registros_colaciones ADD COLUMN IF NOT EXISTS tipo_servicio TEXT;
@@ -10,4 +10,4 @@ ALTER TABLE registros_colaciones DROP CONSTRAINT IF EXISTS unico_registro_por_di
 
 -- Creamos la nueva restricción
 ALTER TABLE registros_colaciones ADD CONSTRAINT unico_registro_por_dia_servicio 
-UNIQUE (camionero_id, fecha, tipo_servicio);
+UNIQUE (trabajador_id, fecha, tipo_servicio);

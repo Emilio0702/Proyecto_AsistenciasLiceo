@@ -8,7 +8,7 @@ const { formatInTimeZone } = require('date-fns-tz');
 
 // Registrar una nueva colación
 router.post('/', verifyToken, async (req, res) => {
-    let { camionero_id, pension_id, usuario_id, tipo_servicio } = req.body;
+    let { trabajador_id, pension_id, usuario_id, tipo_servicio } = req.body;
     
     // Seguridad: Si es encargada, forzar su pension_id y su usuario_id
     if (req.user.rol === 'encargada') {
@@ -24,12 +24,12 @@ router.post('/', verifyToken, async (req, res) => {
 
     try {
         const result = await db.query(
-            `INSERT INTO registros_colaciones (camionero_id, pension_id, usuario_id, fecha, hora, tipo_servicio) 
+            `INSERT INTO registros_colaciones (trabajador_id, pension_id, usuario_id, fecha, hora, tipo_servicio) 
              VALUES ($1, $2, $3, $4, $5, $6) 
              RETURNING *, 
              TO_CHAR(fecha, 'DD/MM/YYYY') as fecha_f,
              TO_CHAR(hora, 'HH12:MI AM') as hora_f`,
-            [camionero_id, pension_id, usuario_id, fechaChile, horaChile, tipo_servicio]
+            [trabajador_id, pension_id, usuario_id, fechaChile, horaChile, tipo_servicio]
         );
         res.status(201).json({
             message: 'Colación registrada exitosamente',
@@ -38,7 +38,7 @@ router.post('/', verifyToken, async (req, res) => {
     } catch (error) {
         if (error.code === '23505') { // Error de duplicado (Unique violation)
             return res.status(400).json({ 
-                message: `Error: El camionero ya registró ${tipo_servicio} el día de hoy.` 
+                message: `Error: El trabajador ya registró ${tipo_servicio} el día de hoy.` 
             });
         }
         res.status(500).json({ error: error.message });
@@ -58,18 +58,18 @@ router.get('/', verifyToken, async (req, res) => {
         }
 
         let queryStr = `
-            SELECT r.*, c.nombre as camionero_nombre, c.rut as camionero_rut, c.patente as camionero_patente, c.empresa as camionero_empresa, p.nombre as pension_nombre, p.ubicacion as pension_ubicacion,
+            SELECT r.*, c.nombre as trabajador_nombre, c.rut as trabajador_rut, c.patente as trabajador_patente, c.empresa as trabajador_empresa, p.nombre as pension_nombre, p.ubicacion as pension_ubicacion,
                    TO_CHAR(r.fecha, 'DD-MM-YYYY') as fecha_registro,
                    TO_CHAR(r.hora, 'HH24:MI') as hora_registro,
                    r.tipo_servicio
             FROM registros_colaciones r
-            JOIN camioneros c ON r.camionero_id = c.id
+            JOIN trabajadores c ON r.trabajador_id = c.id
             JOIN pensiones p ON r.pension_id = p.id
             WHERE 1=1
         `;
         let countQueryStr = `
             SELECT COUNT(*) FROM registros_colaciones r
-            JOIN camioneros c ON r.camionero_id = c.id
+            JOIN trabajadores c ON r.trabajador_id = c.id
             JOIN pensiones p ON r.pension_id = p.id
             WHERE 1=1
         `;
@@ -146,10 +146,10 @@ router.get('/reporte/excel', verifyToken, async (req, res) => {
         }
 
         const result = await db.query(`
-            SELECT r.id, c.nombre as camionero_nombre, c.rut, p.nombre as pension_nombre, 
+            SELECT r.id, c.nombre as trabajador_nombre, c.rut, p.nombre as pension_nombre, 
                    u.nombre as usuario_nombre, r.fecha, r.hora
             FROM registros_colaciones r
-            JOIN camioneros c ON r.camionero_id = c.id
+            JOIN trabajadores c ON r.trabajador_id = c.id
             JOIN pensiones p ON r.pension_id = p.id
             JOIN usuarios u ON r.usuario_id = u.id
             ${pensionFilter}
@@ -157,11 +157,11 @@ router.get('/reporte/excel', verifyToken, async (req, res) => {
         `, params);
 
         const workbook = new ExcelJS.Workbook();
-        const worksheet = workbook.addWorksheet('Colaciones');
+        const workbookWorksheet = workbook.addWorksheet('Colaciones');
 
-        worksheet.columns = [
+        workbookWorksheet.columns = [
             { header: 'ID', key: 'id', width: 10 },
-            { header: 'Camionero', key: 'camionero_nombre', width: 30 },
+            { header: 'Trabajador', key: 'trabajador_nombre', width: 30 },
             { header: 'RUT', key: 'rut', width: 15 },
             { header: 'Pensión', key: 'pension_nombre', width: 30 },
             { header: 'Encargada', key: 'usuario_nombre', width: 30 },
@@ -171,7 +171,7 @@ router.get('/reporte/excel', verifyToken, async (req, res) => {
 
         result.rows.forEach(row => {
             const fechaStr = row.fecha instanceof Date ? row.fecha.toISOString().split('T')[0] : row.fecha;
-            worksheet.addRow({
+            workbookWorksheet.addRow({
                 ...row,
                 fecha: fechaStr
             });

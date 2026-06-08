@@ -8,7 +8,7 @@ import AdminLoginScreen from '../screens/AdminLoginScreen';
 import RoleSelectionScreen from '../screens/RoleSelectionScreen';
 import HomeScreen from '../screens/HomeScreen';
 import AdminHomeScreen from '../screens/AdminHomeScreen';
-import RegisterCamioneroScreen from '../screens/RegisterCamioneroScreen';
+import RegisterTrabajadorScreen from '../screens/RegisterTrabajadorScreen';
 import RegisterAdminScreen from '../screens/RegisterAdminScreen';
 import MapPickerScreen from '../screens/MapPickerScreen';
 import { useAuth } from '../context/AuthContext';
@@ -35,7 +35,7 @@ export default function AppNavigator() {
             {user.rol === 'admin' ? (
               <>
                 <Stack.Screen name="AdminHome" component={AdminHomeScreen} />
-                <Stack.Screen name="RegisterCamionero" component={RegisterCamioneroScreen} />
+                <Stack.Screen name="RegisterTrabajador" component={RegisterTrabajadorScreen} />
                 <Stack.Screen name="RegisterAdmin" component={RegisterAdminScreen} />
                 <Stack.Screen name="MapPicker" component={MapPickerScreen} />
                 <Stack.Screen name="Home" component={HomeScreen} />

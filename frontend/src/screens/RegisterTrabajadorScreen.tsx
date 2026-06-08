@@ -9,7 +9,7 @@ import { CustomAlert } from '../components/CustomAlert';
 
 const EMPRESAS = ['Transportes Morgado', 'Serviterra Ltda', 'Aridos Serviterra'];
 
-export default function RegisterCamioneroScreen({ navigation, route }: any) {
+export default function RegisterTrabajadorScreen({ navigation, route }: any) {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
   const [rut, setRut] = useState(route.params?.rut ? formatRut(route.params.rut) : '');
@@ -40,7 +40,7 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
     setRut(rutFormateado);
   };
 
-  const registrarCamionero = async () => {
+  const registrarTrabajador = async () => {
     if (!rut || !nombre || !empresa) {
       setAlert({ visible: true, title: 'Error', message: 'RUT, Nombre y Empresa son obligatorios', type: 'error' });
       return;
@@ -55,8 +55,8 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
     setLoading(true);
     try {
       const rutFormatted = formatRut(rutCleaned);
-      await api.post('/camioneros', { rut: rutFormatted, nombre, patente, telefono, empresa });
-      setAlert({ visible: true, title: 'Éxito', message: 'Camionero registrado correctamente', type: 'success' });
+      await api.post('/trabajadores', { rut: rutFormatted, nombre, patente, telefono, empresa });
+      setAlert({ visible: true, title: 'Éxito', message: 'Trabajador registrado correctamente', type: 'success' });
       setTimeout(() => navigation.goBack(), 1500);
     } catch (error: any) {
       setAlert({ visible: true, title: 'Error', message: error.response?.data?.message || 'Error al registrar', type: 'error' });
@@ -72,7 +72,7 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <ArrowLeft color="#1C1C1E" size={28} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Nuevo Camionero</Text>
+        <Text style={styles.headerTitle}>Nuevo Trabajador</Text>
       </View>
       
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 20 }]}>
@@ -83,7 +83,7 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
         <View style={styles.form}>
           <View style={styles.sectionHeader}>
             <User size={20} color="#2C5EAD" />
-            <Text style={styles.sectionTitle}>Datos del Conductor</Text>
+            <Text style={styles.sectionTitle}>Datos del Trabajador</Text>
           </View>
 
           <Text style={styles.label}>Empresa</Text>
@@ -107,11 +107,11 @@ export default function RegisterCamioneroScreen({ navigation, route }: any) {
           <Text style={styles.label}>Teléfono</Text>
           <TextInput style={styles.input} value={telefono} onChangeText={setTelefono} keyboardType="phone-pad" placeholder="+569..." />
 
-          <TouchableOpacity style={styles.saveButton} onPress={registrarCamionero} disabled={loading}>
+          <TouchableOpacity style={styles.saveButton} onPress={registrarTrabajador} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : (
               <>
                 <Truck size={22} color="#fff" />
-                <Text style={styles.saveText}>Registrar Camionero</Text>
+                <Text style={styles.saveText}>Registrar Trabajador</Text>
               </>
             )}
           </TouchableOpacity>

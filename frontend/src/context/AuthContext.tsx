@@ -63,7 +63,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signOut = async () => {
-    await AsyncStorage.clear();
+    await AsyncStorage.removeItem('@ServiTerra:user');
+    await AsyncStorage.removeItem('@ServiTerra:token');
+    
+    delete api.defaults.headers.common['Authorization'];
+    
     setToken(null);
     setUser(null);
   };

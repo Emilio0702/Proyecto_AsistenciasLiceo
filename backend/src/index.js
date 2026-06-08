@@ -3,7 +3,7 @@ const cors = require('cors');
 const db = require('../db/db'); 
 
 // Importar rutas
-const camionerosRoutes = require('../routes/camioneros');
+const trabajadoresRoutes = require('../routes/trabajadores');
 const colacionesRoutes = require('../routes/colaciones');
 const authRoutes = require('../routes/auth');
 const pensionesRoutes = require('../routes/pensiones');
@@ -15,7 +15,7 @@ app.use(cors()); // Permitir peticiones desde otros dominios
 app.use(express.json()); 
 
 // Usar rutas
-app.use('/api/camioneros', camionerosRoutes);
+app.use('/api/trabajadores', trabajadoresRoutes);
 app.use('/api/colaciones', colacionesRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/pensiones', pensionesRoutes);
