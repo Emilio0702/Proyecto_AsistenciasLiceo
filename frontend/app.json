@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "ServiTerra",
+    "slug": "serviterra-Pensiones",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -30,9 +30,7 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-barcode-scanner"
-    ],
+    "plugins": [],
     "extra": {
       "eas": {
         "projectId": "cbdac9bb-613b-450f-ae86-2409d5e0cbeb"
