@@ -1,5 +1,8 @@
-# Usar una imagen base de Node.js
-FROM node:20-slim
+# Usar una imagen base de Node.js Alpine (más ligera)
+FROM node:20-alpine
+
+# Instalar procps para solucionar error de 'ps'
+RUN apk add --no-cache procps
 
 # Establecer el directorio de trabajo
 WORKDIR /app
