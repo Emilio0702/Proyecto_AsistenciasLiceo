@@ -21,13 +21,22 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "package": "com.serviterra_pensiones"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-barcode-scanner"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cbdac9bb-613b-450f-ae86-2409d5e0cbeb"
+      }
+    }
   }
 }
