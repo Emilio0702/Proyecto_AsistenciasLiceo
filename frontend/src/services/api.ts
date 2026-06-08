@@ -3,7 +3,7 @@ import axios from 'axios';
 // Obtener la URL de la API desde las variables de entorno de Expo (nativas con prefijo EXPO_PUBLIC_)
 // Si no está definida, por defecto usa la IP local como fallback en desarrollo local
 const DEFAULT_API_URL = 'http://192.168.1.85:3000/api';
-const API_URL = process.env.EXPO_PUBLIC_API_URL || DEFAULT_API_URL;
+const API_URL = (process.env.EXPO_PUBLIC_API_URL || 'https://serviterracolacion-production.up.railway.app') + '/api';
 
 console.log('[API] Inicializado con base URL:', API_URL);
 
