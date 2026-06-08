@@ -41,8 +41,17 @@ export default function RegisterTrabajadorScreen({ navigation, route }: any) {
   };
 
   const registrarTrabajador = async () => {
-    if (!rut || !nombre || !empresa) {
-      setAlert({ visible: true, title: 'Error', message: 'RUT, Nombre y Empresa son obligatorios', type: 'error' });
+    // Validaciones específicas
+    if (!rut) {
+      setAlert({ visible: true, title: 'Falta información', message: 'El RUT es obligatorio.', type: 'error' });
+      return;
+    }
+    if (!nombre) {
+      setAlert({ visible: true, title: 'Falta información', message: 'El nombre es obligatorio.', type: 'error' });
+      return;
+    }
+    if (!empresa) {
+      setAlert({ visible: true, title: 'Falta información', message: 'La empresa es obligatoria.', type: 'error' });
       return;
     }
 
@@ -59,6 +68,7 @@ export default function RegisterTrabajadorScreen({ navigation, route }: any) {
       setAlert({ visible: true, title: 'Éxito', message: 'Trabajador registrado correctamente', type: 'success' });
       setTimeout(() => navigation.goBack(), 1500);
     } catch (error: any) {
+      console.log("Error al registrar trabajador:", error.response?.data || error.message);
       setAlert({ visible: true, title: 'Error', message: error.response?.data?.message || 'Error al registrar', type: 'error' });
     } finally {
       setLoading(false);

@@ -30,9 +30,28 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
   }, [route.params?.ubicacionData]);
 
   const registrarUsuario = async () => {
-    if (!nombre || !email || !password || (!isSuperAdmin && !pension)) {
-      setAlert({ visible: true, title: 'Error', message: 'Todos los datos son obligatorios.', type: 'error' });
+    // Validaciones específicas
+    if (!nombre) {
+      setAlert({ visible: true, title: 'Falta información', message: 'El nombre es obligatorio.', type: 'error' });
       return;
+    }
+    if (!email) {
+      setAlert({ visible: true, title: 'Falta información', message: 'El correo es obligatorio.', type: 'error' });
+      return;
+    }
+    if (!password) {
+      setAlert({ visible: true, title: 'Falta información', message: 'La contraseña es obligatoria.', type: 'error' });
+      return;
+    }
+    if (!isSuperAdmin) {
+      if (!pension) {
+        setAlert({ visible: true, title: 'Falta información', message: 'El nombre de la pensión es obligatorio.', type: 'error' });
+        return;
+      }
+      if (!latitud || !longitud) {
+        setAlert({ visible: true, title: 'Falta información', message: 'Debes seleccionar la ubicación en el mapa.', type: 'error' });
+        return;
+      }
     }
 
     setLoading(true);
@@ -42,9 +61,9 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
       if (!isSuperAdmin) {
         const pensionRes = await api.post('/pensiones', { 
           nombre: pension, 
-          ubicacion: ubicacionTexto || undefined,
-          latitud:  latitud  ?? undefined,
-          longitud: longitud ?? undefined,
+          ubicacion: ubicacionTexto,
+          latitud: latitud,
+          longitud: longitud
         });
         pensionId = pensionRes.data.id;
       }
@@ -60,6 +79,7 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
       setAlert({ visible: true, title: 'Éxito', message: 'Registrado correctamente', type: 'success' });
       setTimeout(() => navigation.goBack(), 1500);
     } catch (error: any) {
+      console.log("Error al registrar:", error.response?.data || error.message);
       const message = error.response?.data?.message || 'Error al registrar';
       setAlert({ visible: true, title: 'Error', message: message, type: 'error' });
     } finally {
@@ -131,8 +151,26 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
           <Text style={styles.label}>Correo</Text>
           <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="correo@ejemplo.com" />
           
+  const [showPassword, setShowPassword] = useState(false);
+
+  // ... (dentro del return, campo contraseña)
           <Text style={styles.label}>Contraseña</Text>
-          <TextInput style={styles.input} value={password} onChangeText={setPassword} secureTextEntry placeholder="******" />
+          <View style={styles.passwordInputContainer}>
+            <TextInput 
+                style={styles.inputPassword} 
+                value={password} 
+                onChangeText={setPassword} 
+                secureTextEntry={!showPassword} 
+                placeholder="******" 
+                placeholderTextColor="#AEAEB2"
+            />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeBtn}>
+              {showPassword
+                ? <EyeOff size={20} color="#8E8E93" />
+                : <Eye size={20} color="#8E8E93" />
+              }
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity style={styles.saveButton} onPress={registrarUsuario} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : (
@@ -155,6 +193,13 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
     </SafeAreaView>
   );
 }
+
+// Dentro de registrarUsuario, actualización del catch:
+// ... catch (error: any) {
+//       console.log("Error al registrar:", error.response?.data || error.message);
+//       const message = error.response?.data?.message || 'Error al registrar';
+//       setAlert({ visible: true, title: 'Error', message: message, type: 'error' });
+//     } ...
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },

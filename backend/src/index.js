@@ -35,7 +35,6 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Servidor backend escuchando en http://localhost:${port}`);
-  console.log('Intenta ir a http://localhost:3000/test-db para probar la conexión a la base de datos.');
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Servidor backend escuchando en http://0.0.0.0:${port}`);
 });
