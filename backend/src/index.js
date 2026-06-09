@@ -35,6 +35,18 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
+// Middleware para registrar peticiones y errores
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+// Middleware de manejo de errores global
+app.use((err, req, res, next) => {
+  console.error('Error global:', err);
+  res.status(500).json({ message: 'Error interno del servidor', error: err.message });
+});
+
 app.listen(port, '0.0.0.0', () => {
   console.log(`Servidor backend escuchando en http://0.0.0.0:${port}`);
 });
