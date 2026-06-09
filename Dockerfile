@@ -19,5 +19,5 @@ COPY backend/ .
 # Exponer el puerto que usa la app
 EXPOSE 3000
 
-# Comando para iniciar la aplicación
-CMD ["npm", "start"]
+# Comando para iniciar la aplicación (ejecutar node directamente)
+CMD ["node", "src/index.js"]
