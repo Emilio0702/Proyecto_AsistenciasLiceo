@@ -41,6 +41,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Endpoint para el healthcheck de Railway
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
 // Middleware de manejo de errores global
 app.use((err, req, res, next) => {
   console.error('Error global:', err);
