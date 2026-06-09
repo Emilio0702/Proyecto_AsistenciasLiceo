@@ -24,7 +24,7 @@ router.post('/', verifyToken, async (req, res) => {
 
     try {
         const result = await db.query(
-            `INSERT INTO registros_colaciones (trabajador_id, pension_id, usuario_id, fecha, hora, tipo_servicio) 
+            `INSERT INTO registros_servicios (trabajador_id, pension_id, usuario_id, fecha, hora, tipo_servicio) 
              VALUES ($1, $2, $3, $4, $5, $6) 
              RETURNING *, 
              TO_CHAR(fecha, 'DD/MM/YYYY') as fecha_f,
@@ -62,13 +62,13 @@ router.get('/', verifyToken, async (req, res) => {
                    TO_CHAR(r.fecha, 'DD-MM-YYYY') as fecha_registro,
                    TO_CHAR(r.hora, 'HH24:MI') as hora_registro,
                    r.tipo_servicio
-            FROM registros_colaciones r
+            FROM registros_servicios r
             JOIN trabajadores c ON r.trabajador_id = c.id
             JOIN pensiones p ON r.pension_id = p.id
             WHERE 1=1
         `;
         let countQueryStr = `
-            SELECT COUNT(*) FROM registros_colaciones r
+            SELECT COUNT(*) FROM registros_servicios r
             JOIN trabajadores c ON r.trabajador_id = c.id
             JOIN pensiones p ON r.pension_id = p.id
             WHERE 1=1
@@ -148,7 +148,7 @@ router.get('/reporte/excel', verifyToken, async (req, res) => {
         const result = await db.query(`
             SELECT r.id, c.nombre as trabajador_nombre, c.rut, p.nombre as pension_nombre, 
                    u.nombre as usuario_nombre, r.fecha, r.hora
-            FROM registros_colaciones r
+            FROM registros_servicios r
             JOIN trabajadores c ON r.trabajador_id = c.id
             JOIN pensiones p ON r.pension_id = p.id
             JOIN usuarios u ON r.usuario_id = u.id

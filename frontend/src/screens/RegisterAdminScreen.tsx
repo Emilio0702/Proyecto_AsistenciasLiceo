@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Image, StatusBar, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { UserPlus, ArrowLeft, Save, Store, MapPin, Map } from 'lucide-react-native';
+import { UserPlus, ArrowLeft, Save, Store, MapPin, Map, Eye, EyeOff } from 'lucide-react-native';
 import api from '../services/api';
 import { CustomAlert } from '../components/CustomAlert';
 
@@ -11,6 +11,7 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [pension, setPension] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const [ubicacionTexto, setUbicacionTexto] = useState('');
   const [latitud, setLatitud] = useState<number | null>(null);
@@ -30,28 +31,13 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
   }, [route.params?.ubicacionData]);
 
   const registrarUsuario = async () => {
-    // Validaciones específicas
-    if (!nombre) {
-      setAlert({ visible: true, title: 'Falta información', message: 'El nombre es obligatorio.', type: 'error' });
-      return;
-    }
-    if (!email) {
-      setAlert({ visible: true, title: 'Falta información', message: 'El correo es obligatorio.', type: 'error' });
-      return;
-    }
-    if (!password) {
-      setAlert({ visible: true, title: 'Falta información', message: 'La contraseña es obligatoria.', type: 'error' });
-      return;
-    }
+    // Validaciones
+    if (!nombre) { setAlert({ visible: true, title: 'Falta información', message: 'El nombre es obligatorio.', type: 'error' }); return; }
+    if (!email) { setAlert({ visible: true, title: 'Falta información', message: 'El correo es obligatorio.', type: 'error' }); return; }
+    if (!password) { setAlert({ visible: true, title: 'Falta información', message: 'La contraseña es obligatoria.', type: 'error' }); return; }
     if (!isSuperAdmin) {
-      if (!pension) {
-        setAlert({ visible: true, title: 'Falta información', message: 'El nombre de la pensión es obligatorio.', type: 'error' });
-        return;
-      }
-      if (!latitud || !longitud) {
-        setAlert({ visible: true, title: 'Falta información', message: 'Debes seleccionar la ubicación en el mapa.', type: 'error' });
-        return;
-      }
+      if (!pension) { setAlert({ visible: true, title: 'Falta información', message: 'El nombre de la pensión es obligatorio.', type: 'error' }); return; }
+      if (!latitud || !longitud) { setAlert({ visible: true, title: 'Falta información', message: 'Debes seleccionar la ubicación en el mapa.', type: 'error' }); return; }
     }
 
     setLoading(true);
@@ -151,9 +137,6 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
           <Text style={styles.label}>Correo</Text>
           <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholder="correo@ejemplo.com" />
           
-  const [showPassword, setShowPassword] = useState(false);
-
-  // ... (dentro del return, campo contraseña)
           <Text style={styles.label}>Contraseña</Text>
           <View style={styles.passwordInputContainer}>
             <TextInput 
@@ -194,13 +177,6 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
   );
 }
 
-// Dentro de registrarUsuario, actualización del catch:
-// ... catch (error: any) {
-//       console.log("Error al registrar:", error.response?.data || error.message);
-//       const message = error.response?.data?.message || 'Error al registrar';
-//       setAlert({ visible: true, title: 'Error', message: message, type: 'error' });
-//     } ...
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   header: { flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#F2F2F7' },
@@ -217,6 +193,9 @@ const styles = StyleSheet.create({
   form: { backgroundColor: '#F8F9FA', padding: 20, borderRadius: 25, borderWidth: 1, borderColor: '#E5E5EA' },
   label: { fontSize: 14, fontWeight: '700', marginBottom: 8, color: '#48484A', marginLeft: 5 },
   input: { backgroundColor: '#fff', padding: 15, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 16 },
+  passwordInputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#E5E5EA' },
+  inputPassword: { flex: 1, padding: 15, fontSize: 16, color: '#1C1C1E' },
+  eyeBtn: { padding: 15 },
   mapBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', height: 56, borderRadius: 15, marginBottom: 15, borderWidth: 1, borderColor: '#E5E5EA', gap: 10 },
   mapBtnSelected: { borderColor: '#2C5EAD' },
   mapBtnText: { fontSize: 15, fontWeight: '700', color: '#8E8E93' },
