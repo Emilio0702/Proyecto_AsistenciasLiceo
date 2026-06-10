@@ -16,19 +16,20 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    // Si el error es 401 (No autorizado), probablemente el token expiró
-    if (error.response && error.response.status === 401) {
-      console.warn('[API] Sesión expirada o no autorizada (401). Limpiando storage...');
+    const isLoginRequest = error.config && error.config.url && error.config.url.includes('/auth/login');
+
+    // Si el error es 401 (No autorizado) y NO es una petición de login, el token expiró
+    if (error.response && error.response.status === 401 && !isLoginRequest) {
+      console.warn('[API] Sesión expirada (401). Limpiando storage...');
       
-      // Limpiar storage de forma manual para forzar logout en la UI (el AuthContext reaccionará si intentamos usarlo)
       await AsyncStorage.removeItem('@ServiTerra:user');
-      await SecureStore.deleteItemAsync('@ServiTerra:token');
+      await SecureStore.deleteItemAsync('serviterra_token');
       
-      // Opcional: Podrías emitir un evento o usar un callback para que AppNavigator redirija al login
+      // Aquí podrías forzar una redirección si tuvieras acceso al navigation
     }
 
     if (error.message === 'Network Error') {
-      console.error('[API] Error de Red. Verifica conexión a internet o disponibilidad del servidor.');
+      console.error('[API] Error de Conexión. URL inalcanzable:', error.config?.url);
     }
     
     return Promise.reject(error);

@@ -23,13 +23,20 @@ router.post('/', verifyToken, async (req, res) => {
     const fechaChile = formatInTimeZone(now, timeZone, 'yyyy-MM-dd');
 
     try {
+        // Buscar nombres para guardar en la tabla (denormalización para el cliente)
+        const trabajadorRes = await db.query('SELECT nombre FROM trabajadores WHERE id = $1', [trabajador_id]);
+        const pensionRes = await db.query('SELECT nombre FROM pensiones WHERE id = $1', [pension_id]);
+        
+        const trabajador_nombre_log = trabajadorRes.rows[0]?.nombre || 'Desconocido';
+        const pension_nombre_log = pensionRes.rows[0]?.nombre || 'Desconocida';
+
         const result = await db.query(
-            `INSERT INTO registros_servicios (trabajador_id, pension_id, usuario_id, fecha, hora, tipo_servicio) 
-             VALUES ($1, $2, $3, $4, $5, $6) 
+            `INSERT INTO registros_servicios (trabajador_id, pension_id, usuario_id, fecha, hora, tipo_servicio, trabajador_nombre, pension_nombre) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
              RETURNING *, 
              TO_CHAR(fecha, 'DD/MM/YYYY') as fecha_f,
              TO_CHAR(hora, 'HH12:MI AM') as hora_f`,
-            [trabajador_id, pension_id, usuario_id, fechaChile, horaChile, tipo_servicio]
+            [trabajador_id, pension_id, usuario_id, fechaChile, horaChile, tipo_servicio, trabajador_nombre_log, pension_nombre_log]
         );
         res.status(201).json({
             message: 'Colación registrada exitosamente',
