@@ -12,11 +12,15 @@ import RegisterTrabajadorScreen from '../screens/RegisterTrabajadorScreen';
 import RegisterAdminScreen from '../screens/RegisterAdminScreen';
 import MapPickerScreen from '../screens/MapPickerScreen';
 import { useAuth } from '../context/AuthContext';
+import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
 
 const Stack = createStackNavigator();
 
 export default function AppNavigator() {
   const { user, loading } = useAuth();
+  
+  // Hook de inactividad global
+  useInactivityTimeout();
 
   if (loading) {
     return (

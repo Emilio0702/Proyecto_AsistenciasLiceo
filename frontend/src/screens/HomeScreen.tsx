@@ -6,7 +6,6 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import api from '../services/api';
-import { useInactivityTimeout } from '../hooks/useInactivityTimeout';
 import { useAuth } from '../context/AuthContext';
 import { cleanRut, formatRut, validateRut } from '../utils/rut';
 import { CustomAlert } from '../components/CustomAlert';
@@ -20,9 +19,6 @@ export default function HomeScreen({ navigation }: any) {
   const nombrePension = user?.pension_nombre || 'ServiTerra';
   const ubicacionPension = user?.pension_ubicacion || '';
   const role = user?.rol || 'encargada';
-  
-  // Hook de inactividad
-  useInactivityTimeout(navigation);
 
   // Estados principales
   const [rut, setRut] = useState('');
