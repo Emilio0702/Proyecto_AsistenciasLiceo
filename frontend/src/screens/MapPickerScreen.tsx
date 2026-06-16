@@ -115,7 +115,10 @@ export default function MapPickerScreen({ navigation, route }: any) {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permiso denegado', 'Se necesita permiso de ubicación para usar esta función.');
+        Alert.alert(
+          'Permiso necesario', 
+          'Para mostrar tu ubicación actual y encontrar la pensión más rápido, necesitamos acceso a tu GPS.'
+        );
         return;
       }
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
@@ -126,8 +129,8 @@ export default function MapPickerScreen({ navigation, route }: any) {
       );
       const direccion = await obtenerDireccion(latitude, longitude);
       setUbicacion({ latitud: latitude, longitud: longitude, direccion });
-    } catch {
-      Alert.alert('Error', 'No se pudo obtener tu ubicación actual.');
+    } catch (error) {
+      Alert.alert('Error', 'No logramos obtener tu ubicación actual. Asegúrate de tener el GPS activado.');
     }
   };
 

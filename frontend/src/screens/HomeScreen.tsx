@@ -436,6 +436,26 @@ export default function HomeScreen({ navigation }: any) {
         </View>
       </Modal>
 
+      <Modal visible={isScannerVisible} animationType="fade" transparent onRequestClose={() => setIsScannerVisible(false)}>
+        <View style={styles.scannerOverlay}>
+          <TouchableOpacity style={styles.closeScanner} onPress={() => setIsScannerVisible(false)}>
+            <X color="#fff" size={40} />
+          </TouchableOpacity>
+          
+          <View style={styles.scannerFrame}>
+            <CameraView
+              style={StyleSheet.absoluteFillObject}
+              onBarcodeScanned={handleBarCodeScanned}
+              barcodeSettings={{
+                barcodeTypes: ['qr', 'pdf417'],
+              }}
+            />
+          </View>
+          
+          <Text style={styles.scannerText}>Apunta al código de la Cédula</Text>
+        </View>
+      </Modal>
+
       <Modal visible={showLogoutModal} transparent animationType="none" onRequestClose={closeLogoutModal}>
         <Animated.View style={[styles.logoutBackdrop, { opacity: logoutBackdrop }]}>
           <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={closeLogoutModal} />
