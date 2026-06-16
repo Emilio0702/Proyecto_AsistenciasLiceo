@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback } from 'react';
 import {
   StyleSheet, View, Text, TextInput, TouchableOpacity,
-  ActivityIndicator, Alert, FlatList,
+  ActivityIndicator, Alert, FlatList, Platform
 } from 'react-native';
-import MapView, { Marker, Region } from 'react-native-maps';
+import MapView, { Marker, Region, UrlTile } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Search, CheckCircle, MapPin, X, Navigation } from 'lucide-react-native';
 import * as Location from 'expo-location';
@@ -229,11 +229,17 @@ export default function MapPickerScreen({ navigation, route }: any) {
           onPress={alTocarMapa}
           showsUserLocation
           showsMyLocationButton={false}
+          mapType={Platform.OS === 'android' ? 'none' : 'standard'}
         >
+          <UrlTile
+            urlTemplate="https://a.tile.openstreetmap.de/{z}/{x}/{y}.png"
+            maximumZ={19}
+            flipY={false}
+          />
           {ubicacion && (
             <Marker
               coordinate={{ latitude: ubicacion.latitud, longitude: ubicacion.longitud }}
-              title="Tienda aquí"
+              title="Ubicación"
               pinColor="#2C5EAD"
             />
           )}

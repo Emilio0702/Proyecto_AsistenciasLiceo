@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, RefreshControl, TextInput, Image, Linking, Alert, StatusBar, Platform, ScrollView, Modal, Animated } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { User, Clock, Store, Search, UserPlus, Truck, Download, LogOut, Settings, ChevronRight, Filter, X, Utensils, Printer } from 'lucide-react-native';
+import { User, Clock, Store, Search, UserPlus, Truck, Download, LogOut, Settings, ChevronRight, Filter, X, Utensils, Printer, Calendar } from 'lucide-react-native';
 import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { CustomAlert } from '../components/CustomAlert';
@@ -27,6 +28,10 @@ export default function AdminHomeScreen({ navigation }: any) {
   const [pensiones, setPensiones] = useState<any[]>([]);
   const [selectedPension, setSelectedPension] = useState('');
   const [activeDateFilter, setActiveDateFilter] = useState('');
+
+  // Estados para el DatePicker
+  const [showPickerInicio, setShowPickerInicio] = useState(false);
+  const [showPickerFin, setShowPickerFin] = useState(false);
   
   const [voucherData, setVoucherData] = useState<any>(null);
   const [showVoucher, setShowVoucher] = useState(false);
@@ -352,27 +357,61 @@ export default function AdminHomeScreen({ navigation }: any) {
                 ))}
               </ScrollView>
 
-              <Text style={[styles.filterLabel, { marginTop: 15 }]}>Personalizado (YYYY-MM-DD)</Text>
+              <Text style={[styles.filterLabel, { marginTop: 15 }]}>Rango de Fecha Personalizado</Text>
               <View style={styles.dateInputsRow}>
-                <TextInput 
-                  style={styles.dateInput} 
-                  placeholder="Desde: 2026-01-01" 
-                  value={fechaInicio} 
-                  onChangeText={(val: string) => { setFechaInicio(val); setActiveDateFilter(''); }} 
-                  selectionColor="#2C5EAD"
-                  cursorColor="#2C5EAD"
-                />
-                <TextInput 
-                  style={styles.dateInput} 
-                  placeholder="Hasta: 2026-12-31" 
-                  value={fechaFin} 
-                  onChangeText={(val: string) => { setFechaFin(val); setActiveDateFilter(''); }} 
-                  selectionColor="#2C5EAD"
-                  cursorColor="#2C5EAD"
-                />
+                <TouchableOpacity 
+                  style={styles.dateSelector} 
+                  onPress={() => setShowPickerInicio(true)}
+                >
+                  <Calendar size={16} color="#2C5EAD" />
+                  <Text style={[styles.dateSelectorText, !fechaInicio && { color: '#8E8E93' }]}>
+                    {fechaInicio || 'Fecha Inicial'}
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  style={styles.dateSelector} 
+                  onPress={() => setShowPickerFin(true)}
+                >
+                  <Calendar size={16} color="#2C5EAD" />
+                  <Text style={[styles.dateSelectorText, !fechaFin && { color: '#8E8E93' }]}>
+                    {fechaFin || 'Fecha Final'}
+                  </Text>
+                </TouchableOpacity>
               </View>
+
+              {showPickerInicio && (
+                <DateTimePicker
+                  value={fechaInicio ? new Date(fechaInicio + 'T12:00:00') : new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, selectedDate) => {
+                    setShowPickerInicio(false);
+                    if (event.type === 'set' && selectedDate) {
+                      setFechaInicio(selectedDate.toISOString().split('T')[0]);
+                      setActiveDateFilter('');
+                    }
+                  }}
+                />
+              )}
+
+              {showPickerFin && (
+                <DateTimePicker
+                  value={fechaFin ? new Date(fechaFin + 'T12:00:00') : new Date()}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  onChange={(event, selectedDate) => {
+                    setShowPickerFin(false);
+                    if (event.type === 'set' && selectedDate) {
+                      setFechaFin(selectedDate.toISOString().split('T')[0]);
+                      setActiveDateFilter('');
+                    }
+                  }}
+                />
+              )}
+
               {(fechaInicio !== '' || fechaFin !== '' || selectedPension !== '' || activeDateFilter !== '') && (
-                <TouchableOpacity style={styles.clearFiltersBtn} onPress={() => { setDateFilter('todos'); setSelectedPension(''); }}>
+                <TouchableOpacity style={styles.clearFiltersBtn} onPress={() => { setFechaInicio(''); setFechaFin(''); setDateFilter('todos'); setSelectedPension(''); }}>
                   <Text style={styles.clearFiltersText}>Limpiar todos los filtros</Text>
                 </TouchableOpacity>
               )}
@@ -600,8 +639,20 @@ const styles = StyleSheet.create({
   quickFilterText: { fontSize: 13, fontWeight: '600', color: '#1C1C1E' },
   quickFilterTextActive: { color: '#fff' },
   pensionesScroll: { flexDirection: 'row', paddingVertical: 2 },
-  dateInputsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  dateInput: { flex: 0.48, backgroundColor: '#fff', height: 45, borderRadius: 10, paddingHorizontal: 10, borderWidth: 1, borderColor: '#E5E5EA', fontSize: 14 },
+  dateInputsRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 },
+  dateSelector: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#fff', 
+    height: 48, 
+    borderRadius: 12, 
+    paddingHorizontal: 12, 
+    borderWidth: 1, 
+    borderColor: '#E5E5EA',
+    gap: 8
+  },
+  dateSelectorText: { fontSize: 14, color: '#1C1C1E', fontWeight: '600' },
   clearFiltersBtn: { marginTop: 15, alignSelf: 'flex-end' },
   clearFiltersText: { color: '#FF3B30', fontSize: 13, fontWeight: '700' },
   recordCard: { backgroundColor: '#fff', padding: 18, borderRadius: 22, marginBottom: 12, borderWidth: 1, borderColor: '#F2F2F7', elevation: 1 },
