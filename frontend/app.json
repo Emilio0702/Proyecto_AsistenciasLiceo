@@ -49,7 +49,8 @@
         {
           "locationAlwaysPermission": "Permitir que ServiTerra acceda a tu ubicación siempre."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {
