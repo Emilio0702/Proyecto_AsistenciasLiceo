@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
+import { setItemAsync, getItemAsync, deleteItemAsync } from '../utils/storage';
 import api from '../services/api';
 
 interface User {
@@ -38,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async function loadStorageData() {
       try {
         const storageUser = await AsyncStorage.getItem('@ServiTerra:user');
-        const storageToken = await SecureStore.getItemAsync('serviterra_token');
+        const storageToken = await getItemAsync('serviterra_token');
 
         if (storageUser && storageToken) {
           setUser(JSON.parse(storageUser));
@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     await AsyncStorage.setItem('@ServiTerra:user', JSON.stringify(userData));
-    await SecureStore.setItemAsync('serviterra_token', authToken);
+    await setItemAsync('serviterra_token', authToken);
 
     api.defaults.headers.common['Authorization'] = `Bearer ${authToken}`;
     
@@ -77,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       await AsyncStorage.removeItem('@ServiTerra:user');
-      await SecureStore.deleteItemAsync('serviterra_token');
+      await deleteItemAsync('serviterra_token');
       
       delete api.defaults.headers.common['Authorization'];
       

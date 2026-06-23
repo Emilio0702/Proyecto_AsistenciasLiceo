@@ -1,5 +1,5 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { deleteItemAsync } from '../utils/storage';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // URL de la API: Prioriza variable de entorno, luego Railway, luego fallback local
@@ -31,8 +31,8 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401 && !isLoginRequest) {
       console.warn('[API] Sesión expirada (401). Limpiando storage...');
       
-      await AsyncStorage.removeItem('@ServiTerra:user');
-      await SecureStore.deleteItemAsync('serviterra_token');
+      // Eliminar el token del dispositivo de forma segura usando la utilidad cruzada
+      await deleteItemAsync('serviterra_token');
       
       // Aquí podrías forzar una redirección si tuvieras acceso al navigation
     }
