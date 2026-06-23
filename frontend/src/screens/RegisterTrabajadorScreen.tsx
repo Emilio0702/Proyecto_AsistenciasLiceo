@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Image, Modal, StatusBar, ScrollView, Platform } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Image, Modal, StatusBar, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Truck, ArrowLeft, User, QrCode, X, Building2, Phone, Car } from 'lucide-react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Truck, ArrowLeft, User } from 'lucide-react-native';
 import api from '../services/api';
 import { cleanRut, formatRut, validateRut } from '../utils/rut';
 import { CustomAlert } from '../components/CustomAlert';
@@ -18,27 +17,7 @@ export default function RegisterTrabajadorScreen({ navigation, route }: any) {
   const [telefono, setTelefono] = useState('');
   const [empresa, setEmpresa] = useState(EMPRESAS[0]);
   
-  const [isScannerVisible, setIsScannerVisible] = useState(false);
-  const [permission, requestPermission] = useCameraPermissions();
   const [alert, setAlert] = useState<{ visible: boolean; title: string; message: string; type: 'success' | 'error' }>({ visible: false, title: '', message: '', type: 'success' });
-
-  const openScanner = async () => {
-    if (!permission?.granted) {
-      const { granted } = await requestPermission();
-      if (!granted) {
-        setAlert({ visible: true, title: 'Permiso denegado', message: 'Se necesita permiso de cámara.', type: 'error' });
-        return;
-      }
-    }
-    setIsScannerVisible(true);
-  };
-
-  const handleBarCodeScanned = ({ data }: { data: string }) => {
-    setIsScannerVisible(false);
-    const match = data.match(/(\d{7,8})-([\dkK])/);
-    const rutFormateado = formatRut(match ? match[0] : data);
-    setRut(rutFormateado);
-  };
 
   const registrarTrabajador = async () => {
     // Validaciones específicas
@@ -68,7 +47,6 @@ export default function RegisterTrabajadorScreen({ navigation, route }: any) {
       setAlert({ visible: true, title: 'Éxito', message: 'Trabajador registrado correctamente', type: 'success' });
       setTimeout(() => navigation.goBack(), 1500);
     } catch (error: any) {
-      console.log("Error al registrar trabajador:", error.response?.data || error.message);
       setAlert({ visible: true, title: 'Error', message: error.response?.data?.message || 'Error al registrar', type: 'error' });
     } finally {
       setLoading(false);
@@ -85,7 +63,8 @@ export default function RegisterTrabajadorScreen({ navigation, route }: any) {
         <Text style={styles.headerTitle}>Nuevo Trabajador</Text>
       </View>
       
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 20 }]}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 20 }]} keyboardShouldPersistTaps="handled">
         <View style={styles.logoBox}>
           <Image source={require('../../assets/serviterra.jpg')} style={styles.logo} resizeMode="contain" />
         </View>
@@ -127,6 +106,7 @@ export default function RegisterTrabajadorScreen({ navigation, route }: any) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <CustomAlert 
         visible={alert.visible} 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Image, StatusBar, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ActivityIndicator, Image, StatusBar, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { UserPlus, ArrowLeft, Save, Store, MapPin, Map, Eye, EyeOff } from 'lucide-react-native';
+import { ArrowLeft, Save, MapPin, Map, Eye, EyeOff } from 'lucide-react-native';
 import api from '../services/api';
 import { CustomAlert } from '../components/CustomAlert';
 
@@ -65,7 +65,6 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
       setAlert({ visible: true, title: 'Éxito', message: 'Registrado correctamente', type: 'success' });
       setTimeout(() => navigation.goBack(), 1500);
     } catch (error: any) {
-      console.log("Error al registrar:", error.response?.data || error.message);
       const message = error.response?.data?.message || 'Error al registrar';
       setAlert({ visible: true, title: 'Error', message: message, type: 'error' });
     } finally {
@@ -83,7 +82,8 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
         <Text style={styles.headerTitle}>Registrar Personal</Text>
       </View>
       
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.logoBox}>
           <Image source={require('../../assets/serviterra.jpg')} style={styles.logo} resizeMode="contain" />
         </View>
@@ -165,6 +165,7 @@ export default function RegisterAdminScreen({ navigation, route }: any) {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <CustomAlert 
         visible={alert.visible} 
